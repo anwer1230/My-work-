@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>المعلمون - تعليم اللغة الإنجليزية</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #e9f5ff; /* لون خلفية جذاب */
+            margin: 0;
+            padding: 20px;
+            max-width: 800px; /* عرض الصفحة */
+            margin: 20px auto; /* توسيط الصفحة */
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2); /* ظل للصفحة */
+        }
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        h1 {
+            font-size: 36px;
+            margin-bottom: 10px;
+            color: #4CAF50; /* لون العنوان */
+        }
+        .teacher {
+            background-color: #ffe0b2; /* لون خلفية جديد للمعلم الأول */
+            border: 1px solid #00796b; /* لون حدود */
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: center; /* توسيط النص */
+            display: flex; /* استخدام الفليكس */
+            align-items: center; /* محاذاة العمود بشكل عمودي */
+            transition: transform 0.3s; /* تأثير التحويم */
+        }
+        .teacher:hover {
+            transform: scale(1.02); /* تأثير عند التحويم */
+        }
+        .teacher img {
+            width: 150px; /* عرض الصورة */
+            height: auto; /* ارتفاع تلقائي */
+            border-radius: 75px; /* زوايا دائرية للصورة */
+            margin-right: 15px; /* مسافة بين الصورة والنص */
+        }
+        .teacher-description {
+            text-align: left; /* محاذاة النص إلى اليسار */
+        }
+        .teacher:nth-child(odd) {
+            background-color: #e3f2fd; /* لون مختلف للمعلم الفردي */
+        }
+        .teacher:nth-child(even) {
+            background-color: #fff3e0; /* لون مختلف للمعلم الزوجي */
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>المعلمون المتاحون</h1>
+    </header>
+    <main>
+        <div class="teacher" style="background-color: #ffe0b2;"> <!-- لون مختلف للمعلم الأول -->
+            <img src="image/تنزيل.hdjpeg.jpg" alt="معلم 1">
+            <div class="teacher-description">
+                <h3>معلم 1</h3>
+                <p>90% graduate from the University of London, majoring in English Language. He is well-traveled among global academies due to his excellence and expertise in teaching.</p>
+            </div>
+        </div>
+        <div class="teacher">
+            <img src="image/تنزيل.hdjpeg.jpg" alt="معلم 2">
+            <div class="teacher-description">
+                <h3>معلم 2</h3>
+                <p>Graduated from the University of California with a major in Translation. His skills in language translation make him an excellent choice for students seeking to master the English language.</p>
+            </div>
+        </div>
+        <div class="teacher">
+            <img src="image/تنزيل.hdjpeg.jpg" alt="معلم 3">
+            <div class="teacher-description">
+                <h3>معلم 3</h3>
+                <p>Graduated from Abu Dhabi University, bringing unique insights and methodologies to his teaching, helping students to achieve fluency in English.</p>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

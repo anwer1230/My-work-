@@ -1,0 +1,95 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #e9f5ff; /* لون خلفية جذاب */
+    margin: 0;
+    padding: 0;
+    border: 5px solid #4CAF50; /* حدود الصفحة */
+    border-radius: 10px; /* زوايا دائرية للحدود */
+    max-width: 800px; /* عرض الصفحة */
+    margin: 20px auto; /* توسيط الصفحة */
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.2); /* ظل للصفحة */
+}
+
+header {
+    background-color: #4CAF50; /* جذاب */
+    color: white;
+    text-align: center;
+    padding: 20px;
+    border-bottom: 2px solid #ccc;
+    border-top-left-radius: 10px; /* زوايا دائرية */
+    border-top-right-radius: 10px; /* زوايا دائرية */
+}
+
+header h1 {
+    font-size: 36px; /* خط كبير */
+    margin: 0;
+}
+
+nav {
+    display: flex;
+    flex-direction: column; /* ترتيب عمودي */
+    align-items: center;
+    margin: 20px 0;
+}
+
+nav a {
+    display: block;
+    background-color: #2196F3; /* لون جذاب */
+    color: white;
+    padding: 15px;
+    margin: 5px;
+    text-decoration: none;
+    border-radius: 5px;
+    width: 200px; /* عرض ثابت */
+    text-align: center;
+    transition: background-color 0.3s; /* تأثير التحويم */
+}
+
+nav a:hover {
+    background-color: #1976D2; /* لون أغمق عند التحويم */
+}
+
+main {
+    text-align: center;
+    margin: 20px;
+}
+
+img {
+    max-width: 100%; /* صورة تناسب الصفحة */
+    height: auto;
+    border: 2px solid #4CAF50; /* حدود للصورة */
+    border-radius: 5px; /* زوايا دائرية للصورة */
+}
+
+.teacher {
+    background-color: #e0f7fa; /* لون خلفية */
+    border: 1px solid #00796b; /* لون حدود */
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+    text-align: center; /* توسيط النص */
+    display: flex; /* استخدام الفليكس */
+    align-items: center; /* محاذاة العمود بشكل عمودي */
+    transition: transform 0.3s; /* تأثير التحويم */
+}
+
+.teacher:hover {
+    transform: scale(1.02); /* تأثير عند التحويم */
+}
+
+.teacher img {
+    width: 150px; /* عرض الصورة */
+    height: auto; /* ارتفاع تلقائي */
+    border-radius: 75px; /* زوايا دائرية للصورة */
+    margin-right: 15px; /* مسافة بين الصورة والنص */
+}
+
+.teacher-description {
+    text-align: left; /* محاذاة النص إلى اليسار */
+}
+
+.teacher:nth-child(odd) {
+    background-color: #e3f2fd; /* لون مختلف للمعلم الفردي */
+}
+
+.teacher:nth-child(even

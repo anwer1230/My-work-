@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تعليم اللغة الإنجليزية - التقدم المحرز</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        h1 {
+            font-size: 36px;
+            margin-bottom: 10px;
+        }
+        .stats-container {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 30px;
+        }
+        .stat-box {
+            background-color: #e0f7fa; /* لون خلفية */
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 8px;
+            width: 30%;
+            text-align: center;
+        }
+        .status-section {
+            margin-top: 30px;
+            text-align: center;
+        }
+        .status-box {
+            background-color: #e7f4e4; /* لون خلفية */
+            border: 1px solid #b7e5b7; /* لون حدود */
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .message {
+            margin-top: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            color: green;
+        }
+        .locked {
+            background-color: #f8d7da; /* لون خلفية */
+            border: 1px solid #f5c6cb; /* لون حدود */
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .active-box {
+            background-color: #ffe0b2; /* لون خاص لخانة نشط */
+            border: 1px solid #f9c74f; /* لون حدود */
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>مدى تقدمك</h1>
+    </header>
+    <main>
+        <div class="stats-container">
+            <div class="stat-box">
+                <h3>دقائق مع المدرسين</h3>
+                <p class="progress-result">0</p> <!-- النتيجة 0 -->
+            </div>
+            <div class="stat-box">
+                <h3>الدروس</h3>
+                <p class="progress-result">0</p> <!-- النتيجة 0 -->
+            </div>
+        </div>
+
+        <div class="active-box">
+            <h3>نشط</h3>
+        </div>
+
+        <div class="status-section">
+            <div class="status-box">
+                <p>اكتمل</p>
+                <p class="message">لقد اكتملت هذه العملية. شكراً لدخولك هنا.</p>
+            </div>
+        </div>
+
+        <div class="locked">
+            <h3>مقفل</h3>
+            <p>لا توجد مهام مقفلة حالياً.</p>
+        </div>
+    </main>
+</body>
+</html>
