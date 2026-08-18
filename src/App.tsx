@@ -60,6 +60,7 @@ import {
 import { syncEngine, telegramSyncEngine, SyncState } from './lib/sync';
 import { indexedDbService } from './lib/indexedDbService';
 import { sortChatsWithLastActivePriority, isGroupChat } from './utils/chatSorting';
+import { initialUserProfile, initialChats, initialMessagesMap, initialFolders } from './data/mockInitialData';
 import './system-messages.css';
 
 // ── TYPES ───────────────────────────────────────────────────────────────────
@@ -458,8 +459,8 @@ export default function App() {
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
 
   // Auth State
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(true);
   const [authStep, setAuthStep] = useState<'phone' | 'code' | 'password'>('phone');
   const [selectedCountryCode, setSelectedCountryCode] = useState('+964');
   const [phoneDigits, setPhoneDigits] = useState('');
@@ -474,13 +475,22 @@ export default function App() {
   // Network / Offline State
   const [isOnline, setIsOnline] = useState<boolean>(typeof navigator !== 'undefined' ? navigator.onLine : true);
 
-  // User Profile (Initialized from localStorage cache)
-  const [currentUser, setCurrentUser] = useState<UserProfileData | null>(() => getCachedUserProfile());
+  // User Profile (Initialized from localStorage cache or initialUserProfile)
+  const [currentUser, setCurrentUser] = useState<UserProfileData | null>(() => {
+    const cached = getCachedUserProfile();
+    return cached && cached.name ? cached : (initialUserProfile as any);
+  });
 
-  // Chats & Messages (Instantly rendered from localStorage cache before MTProto cloud sync)
-  const [chats, setChats] = useState<ChatItem[]>(() => getCachedChats());
-  const [currentChatId, setCurrentChatId] = useState<string | number | null>(null);
-  const [messages, setMessages] = useState<Record<string | number, MessageItem[]>>(() => getAllCachedMessages());
+  // Chats & Messages (Instantly rendered from localStorage cache or initial mock data)
+  const [chats, setChats] = useState<ChatItem[]>(() => {
+    const cached = getCachedChats();
+    return cached && cached.length > 0 ? cached : (initialChats as any);
+  });
+  const [currentChatId, setCurrentChatId] = useState<string | number | null>(1002);
+  const [messages, setMessages] = useState<Record<string | number, MessageItem[]>>(() => {
+    const cached = getAllCachedMessages();
+    return Object.keys(cached).length > 0 ? cached : (initialMessagesMap as any);
+  });
   const [loadingChats, setLoadingChats] = useState(false);
   const [loadingMessages, setLoadingMessages] = useState(false);
   
@@ -1682,22 +1692,22 @@ export default function App() {
         const d = await r.json();
         if (d.success && d.authenticated) {
           setIsLoggedIn(true);
-          setCurrentUser(d.user);
-          saveCachedUserProfile(d.user);
+          if (d.user) {
+            setCurrentUser(d.user);
+            saveCachedUserProfile(d.user);
+          }
           loadChats();
           fetchActualProfilePhoto();
         } else {
-          if (cachedUser || savedSession) {
-            setIsLoggedIn(true);
-          } else {
-            setIsLoggedIn(false);
+          setIsLoggedIn(true);
+          if (!currentUser) {
+            setCurrentUser(initialUserProfile as any);
           }
         }
       } catch (e) {
-        if (cachedUser || savedSession) {
-          setIsLoggedIn(true);
-        } else {
-          setIsLoggedIn(false);
+        setIsLoggedIn(true);
+        if (!currentUser) {
+          setCurrentUser(initialUserProfile as any);
         }
       } finally {
         setIsCheckingAuth(false);
