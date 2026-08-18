@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* ═══════════ TOKENS ═══════════ */
+/* ═══════════ TOKENS (DrKLO/Telegram Android Dimensions & Specs) ═══════════ */
 :root {
   --blue: #2481cc;
   --blue-d: #1d6fa5;
@@ -29,7 +29,11 @@
   --read: #4fae4e;
   --delivered: #707579;
   --sidebar-w: clamp(340px, 30vw, 420px);
-  --hdr: 56px;
+  --hdr: 56px; /* Telegram Android Standard ActionBar 56dp */
+  --dialog-cell-h: 72px; /* DialogCell.java 72dp */
+  --avatar-size: 54px; /* DialogCell Avatar 54dp */
+  --drawer-w: 320px; /* Telegram NavigationDrawer 320dp */
+  --fab-size: 56px; /* Telegram Android FAB 56dp */
   --tg-font: "Roboto", "Cairo", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
@@ -62,7 +66,7 @@
   --delivered: #7e8c99;
 }
 
-/* ═══════════ RESET & BASE ═══════════ */
+/* ═══════════ RESET & BASE (Telegram Android Native Feel) ═══════════ */
 * {
   margin: 0;
   padding: 0;
@@ -73,15 +77,18 @@
 html, body {
   height: 100%;
   overflow: hidden;
-  font-family: 'Roboto', 'Tajawal', system-ui, sans-serif;
+  font-family: 'Roboto', 'Tajawal', 'Cairo', system-ui, sans-serif;
   font-size: 14px;
   background: var(--bg);
   color: var(--text);
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
 }
 
+/* Telegram Android Slim Smooth Scrollbars */
 ::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
@@ -89,12 +96,13 @@ html, body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(128,128,128,.25);
-  border-radius: 4px;
+  background: rgba(128, 128, 128, 0.28);
+  border-radius: 6px;
+  transition: background 0.2s;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(128,128,128,.4);
+  background: rgba(128, 128, 128, 0.5);
 }
 
 a {
