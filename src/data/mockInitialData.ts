@@ -285,6 +285,41 @@ export const initialMessagesMap: Record<number, Message[]> = {
       reactions: [{ emoji: '❤️', count: 4 }],
     }
   ],
+  1003: [
+    {
+      id: 301,
+      chat_id: '1003',
+      sender_id: 'channel_1003',
+      sender_name: 'Telegram News',
+      out: false,
+      from_me: false,
+      text: '📢 مرحباً بكم في قناة التحديثات والأخبار التقنية!\n\nنستعرض هنا أهم الميزات والتحديثات البرمجية الخاصة ببروتوكولات MTProto وأنظمة الأتمتة المتقدمة.',
+      date: Math.floor(Date.now() / 1000) - 18000,
+      reactions: [{ emoji: '🔥', count: 18 }],
+    },
+    {
+      id: 302,
+      chat_id: '1003',
+      sender_id: 'channel_1003',
+      sender_name: 'Telegram News',
+      out: false,
+      from_me: false,
+      text: '⚡ تم تحديث محرك المزامنة اللحظية (Real-Time SSE) بنجاح ليعمل بسرعة استجابة فائقة مع صمود كامل ضد انقطاع الشبكة.',
+      date: Math.floor(Date.now() / 1000) - 7200,
+      reactions: [{ emoji: '⚡', count: 24 }],
+    },
+    {
+      id: 303,
+      chat_id: '1003',
+      sender_id: 'channel_1003',
+      sender_name: 'Telegram News',
+      out: false,
+      from_me: false,
+      text: '🚀 إطلاق النسخة 12.8 مع دعم البث اللحظي SSE ومزامنة 0ms الفورية',
+      date: Math.floor(Date.now() / 1000) - 900,
+      reactions: [{ emoji: '🎉', count: 42 }, { emoji: '👍', count: 19 }],
+    }
+  ],
   1004: [
     {
       id: 401,
@@ -306,6 +341,66 @@ export const initialMessagesMap: Record<number, Message[]> = {
       text: 'أهلاً يا أنور، راجعت كود الـ MTProto وكان الأداء ممتازاً جداً وسريعاً!',
       date: Math.floor(Date.now() / 1000) - 1800,
       reactions: [{ emoji: '🚀', count: 1 }],
+    }
+  ],
+  1005: [
+    {
+      id: 501,
+      chat_id: '1005',
+      sender_id: 'user_1001',
+      sender_name: 'أنور سيف',
+      out: true,
+      from_me: true,
+      text: 'أهلاً أستاذة سارة، تم إعداد التقارير والتحليلات المطلوبة وإرسالها بالكامل.',
+      date: Math.floor(Date.now() / 1000) - 7200,
+    },
+    {
+      id: 502,
+      chat_id: '1005',
+      sender_id: 'user_502',
+      sender_name: 'سارة القحطاني',
+      out: false,
+      from_me: false,
+      text: 'شكراً جزيلاً، تم استلام ملفات البحث والمراجعة بدقة عالية 📄✨',
+      date: Math.floor(Date.now() / 1000) - 3600,
+      reactions: [{ emoji: '🙏', count: 2 }],
+    }
+  ],
+  1006: [
+    {
+      id: 601,
+      chat_id: '1006',
+      sender_id: 'user_601',
+      sender_name: 'أحمد طارق',
+      out: false,
+      from_me: false,
+      text: 'ما رأيكم في دمج خوارزميات الذكاء الاصطناعي مع البث المباشر؟',
+      date: Math.floor(Date.now() / 1000) - 7200,
+      reactions: [{ emoji: '💡', count: 5 }],
+    },
+    {
+      id: 602,
+      chat_id: '1006',
+      sender_id: 'user_1001',
+      sender_name: 'أنور سيف',
+      out: true,
+      from_me: true,
+      text: 'فكرة ممتازة، قمنا بتطبيقها بالفعل في نظام المزامنة SSE لضمان استجابة 0ms!',
+      date: Math.floor(Date.now() / 1000) - 3600,
+      reactions: [{ emoji: '🔥', count: 7 }],
+    }
+  ],
+  1007: [
+    {
+      id: 701,
+      chat_id: '1007',
+      sender_id: 'channel_1007',
+      sender_name: 'Freelance Hub',
+      out: false,
+      from_me: false,
+      text: 'مطلوب مطور واجهات مستخدم للعمل عن بعد بدوام مرن 💼\n\nالمهارات: React + TypeScript + Tailwind CSS\nللتقديم يرجى التواصل عبر المعرف.',
+      date: Math.floor(Date.now() / 1000) - 14400,
+      reactions: [{ emoji: '👀', count: 12 }],
     }
   ],
   1008: [

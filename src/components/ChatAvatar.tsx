@@ -1,36 +1,39 @@
 import React, { useState } from 'react';
-import { Users, Bot, Radio, Lock, User, Sparkles } from 'lucide-react';
+import { Users, Bot, Radio, Lock, Sparkles } from 'lucide-react';
 
 interface ChatAvatarProps {
-  title: string;
+  title?: string;
   avatar?: string;
-  type?: 'private' | 'group' | 'supergroup' | 'channel' | 'bot' | 'secret';
+  photo?: string;
+  type?: 'private' | 'group' | 'supergroup' | 'channel' | 'bot' | 'secret' | 'saved';
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   isOnline?: boolean;
   className?: string;
+  [key: string]: any;
 }
 
-// Deterministic Telegram color gradients based on title hash
-const GRADIENTS = [
-  'from-sky-500 to-blue-600',
-  'from-emerald-500 to-teal-700',
-  'from-violet-500 to-purple-700',
-  'from-amber-500 to-orange-600',
-  'from-rose-500 to-pink-600',
-  'from-indigo-500 to-cyan-600',
-  'from-teal-500 to-emerald-700',
+// Telegram Android Standard Gradients
+const TELEGRAM_GRADIENTS = [
+  'linear-gradient(135deg, #2AABEE 0%, #229ED9 100%)', // Blue
+  'linear-gradient(135deg, #FF885E 0%, #FF516A 100%)', // Red/Orange
+  'linear-gradient(135deg, #6AC358 0%, #54AB42 100%)', // Green
+  'linear-gradient(135deg, #A667EC 0%, #8544D6 100%)', // Violet
+  'linear-gradient(135deg, #FFA938 0%, #F57C00 100%)', // Amber
+  'linear-gradient(135deg, #28C9B9 0%, #00A896 100%)', // Cyan/Teal
+  'linear-gradient(135deg, #FF6699 0%, #E91E63 100%)', // Pink
 ];
 
-function getGradient(str: string): string {
+function getTelegramGradient(str: string): string {
+  if (!str) return TELEGRAM_GRADIENTS[0];
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
     hash = str.charCodeAt(i) + ((hash << 5) - hash);
   }
-  const index = Math.abs(hash) % GRADIENTS.length;
-  return GRADIENTS[index];
+  const index = Math.abs(hash) % TELEGRAM_GRADIENTS.length;
+  return TELEGRAM_GRADIENTS[index];
 }
 
-function getInitials(str: string): string {
+function getInitials(str?: string): string {
   if (!str) return 'T';
   const cleanStr = str.replace(/[^\p{L}\p{N}\s]/gu, '').trim();
   if (!cleanStr) return str.charAt(0).toUpperCase();
@@ -38,20 +41,22 @@ function getInitials(str: string): string {
   if (parts.length >= 2) {
     return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
   }
-  return cleanStr.charAt(0).toUpperCase();
+  return cleanStr.slice(0, 2).toUpperCase();
 }
 
 export const ChatAvatar: React.FC<ChatAvatarProps> = ({
-  title,
+  title = 'Telegram',
   avatar,
+  photo,
   type = 'private',
   size = 'md',
   isOnline = false,
   className = '',
 }) => {
   const [imageError, setImageError] = useState(false);
+  const activeImage = avatar || photo;
 
-  // Size mapping
+  // Size mapping in pixels/Tailwind
   const sizeClasses = {
     xs: 'w-6 h-6 text-[10px]',
     sm: 'w-8 h-8 text-xs',
@@ -69,7 +74,7 @@ export const ChatAvatar: React.FC<ChatAvatarProps> = ({
   }[size];
 
   const initials = getInitials(title);
-  const gradient = getGradient(title || 'Telegram');
+  const gradient = getTelegramGradient(title);
 
   // Render type-specific badge icon overlay
   const renderTypeOverlay = () => {
@@ -106,17 +111,18 @@ export const ChatAvatar: React.FC<ChatAvatarProps> = ({
 
   return (
     <div className={`relative shrink-0 ${className}`}>
-      {avatar && !imageError ? (
+      {activeImage && !imageError ? (
         <img
-          src={avatar}
+          src={activeImage}
           alt={title}
           onError={() => setImageError(true)}
-          className={`${sizeClasses} rounded-full object-cover border border-slate-700/80 shadow-sm`}
+          className={`${sizeClasses} rounded-full object-cover border border-black/10 shadow-sm`}
         />
       ) : (
         /* Dynamic Telegram Gradient Icon/Initials Avatar */
         <div
-          className={`${sizeClasses} rounded-full bg-gradient-to-br ${gradient} flex items-center justify-center font-bold text-white shadow-md border border-white/10 select-none`}
+          className={`${sizeClasses} rounded-full flex items-center justify-center font-bold text-white shadow-sm border border-white/20 select-none`}
+          style={{ background: gradient }}
         >
           {type === 'bot' ? (
             <Sparkles className={iconSizes} />
@@ -134,11 +140,12 @@ export const ChatAvatar: React.FC<ChatAvatarProps> = ({
 
       {/* Online indicator */}
       {isOnline && (
-        <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-slate-900 shadow-sm" />
+        <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white dark:border-slate-900 shadow-sm" />
       )}
 
       {/* Type overlay badge if image is shown */}
-      {avatar && !imageError && renderTypeOverlay()}
+      {activeImage && !imageError && renderTypeOverlay()}
     </div>
   );
 };
+

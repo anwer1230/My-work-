@@ -1128,24 +1128,27 @@ html[dir="rtl"] .chat-avatar .online-dot {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 0 16px;
+  padding: 0 12px;
   height: var(--hdr);
   background: var(--surface);
   border-bottom: 1px solid var(--divider);
   flex-shrink: 0;
   position: relative;
-  z-index: 2;
+  z-index: 20;
 }
 
 .chat-hdr .back-btn {
   display: none;
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
+  font-size: 19px;
   color: var(--text2);
+  background: transparent;
+  border: none;
+  cursor: pointer;
   transition: all .2s;
   flex-shrink: 0;
 }
@@ -1155,52 +1158,71 @@ html[dir="rtl"] .chat-avatar .online-dot {
   color: var(--blue);
 }
 
-.chat-hdr-info {
-  flex: 1;
-  min-width: 0;
+.hdr-avatar, .chat-hdr-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
   cursor: pointer;
 }
 
-.chat-hdr-name {
+.hdr-info, .chat-hdr-info {
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.hdr-title, .chat-hdr-name {
   font-size: 15px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.25;
+}
+
+.hdr-sub, .chat-hdr-status {
+  font-size: 12.5px;
+  color: var(--text2);
+  transition: all .2s;
+  line-height: 1.2;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.chat-hdr-status {
-  font-size: 13px;
+.hdr-sub.typing, .chat-hdr-status.typing {
   color: var(--blue);
-  transition: all .3s;
-  min-height: 18px;
-}
-
-.chat-hdr-status.typing {
   font-style: italic;
 }
 
-.chat-hdr-actions {
+.hdr-actions, .chat-hdr-actions {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 4px;
   flex-shrink: 0;
 }
 
-.chat-hdr-actions button {
-  width: 36px;
-  height: 36px;
+.hdr-actions button, .chat-hdr-actions button {
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 18px;
   color: var(--text2);
+  background: transparent;
+  border: none;
+  cursor: pointer;
   transition: all .2s;
 }
 
-.chat-hdr-actions button:hover {
+.hdr-actions button:hover, .chat-hdr-actions button:hover {
   background: var(--hover);
   color: var(--blue);
 }
@@ -2217,105 +2239,164 @@ html[dir="rtl"] .msg-row.out .msg-quick-react-btn {
   color: var(--text);
 }
 
-/* ═══════════ INPUT BAR ═══════════ */
+/* ═══════════ INPUT BAR (Telegram Android Native Architecture) ═══════════ */
 .input-bar {
   display: flex;
   align-items: flex-end;
   gap: 8px;
-  padding: 8px 12px;
+  padding: 8px 10px;
   background: var(--surface);
   border-top: 1px solid var(--divider);
   flex-shrink: 0;
   position: relative;
+  width: 100%;
+  box-sizing: border-box;
+  z-index: 20;
 }
 
-.input-bar .attach-btn, .input-bar .emoji-btn {
-  width: 40px;
-  height: 40px;
+.input-wrap {
+  display: flex;
+  align-items: flex-end;
+  flex: 1 1 auto;
+  min-width: 0;
+  background: var(--surface2);
+  border: 1px solid var(--divider);
+  border-radius: 24px;
+  padding: 3px 6px;
+  box-sizing: border-box;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.input-wrap:focus-within {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 1px rgba(36, 129, 204, 0.2);
+}
+
+.capsule-btn {
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
   border-radius: 50%;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
+  font-size: 19px;
   color: var(--text2);
-  transition: all .2s;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  outline: none;
+  transition: color 0.15s, transform 0.15s, background 0.15s;
 }
 
-.input-bar .attach-btn:hover, .input-bar .emoji-btn:hover {
+.capsule-btn:hover {
+  color: var(--blue);
   background: var(--hover);
-  color: var(--blue);
 }
 
-.input-bar .emoji-btn.active {
-  color: var(--blue);
+.capsule-btn:active {
+  transform: scale(0.92);
 }
 
 .msg-input {
-  flex: 1;
-  background: var(--input-bg);
-  border: 1px solid var(--input-border);
-  border-radius: 20px;
-  padding: 10px 16px;
-  font-size: 14px;
+  flex: 1 1 auto;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  padding: 8px 6px;
+  font-size: 15px;
   resize: none;
   max-height: 120px;
+  min-height: 38px;
   outline: none;
   color: var(--text);
   line-height: 1.4;
-  transition: border-color .2s;
+  font-family: inherit;
   overflow-y: auto;
-}
-
-.msg-input:focus {
-  border-color: var(--blue);
+  box-sizing: border-box;
 }
 
 .msg-input::placeholder {
-  color: var(--text2);
+  color: var(--text3);
 }
 
-.send-btn {
+.attach-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.send-btn, .mic-btn {
   width: 44px;
   height: 44px;
+  min-width: 44px;
   border-radius: 50%;
   flex-shrink: 0;
   background: var(--blue);
-  color: #fff;
+  color: #ffffff;
   font-size: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all .2s;
-  box-shadow: 0 2px 8px rgba(42,171,238,.4);
+  border: none;
+  cursor: pointer;
+  outline: none;
+  transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.15s, box-shadow 0.15s;
+  box-shadow: 0 2px 8px rgba(36, 129, 204, 0.35);
 }
 
-.send-btn:hover {
-  background: var(--blue-d);
-  transform: scale(1.05);
+.send-btn:hover, .mic-btn:hover {
+  background: var(--blue-h);
+  transform: scale(1.06);
 }
 
-.send-btn:active {
-  transform: scale(.95);
-}
-
-.send-btn.mic {
-  background: var(--text3);
-  box-shadow: none;
+.send-btn:active, .mic-btn:active {
+  transform: scale(0.92);
 }
 
 /* attach menu */
 .attach-menu {
   position: absolute;
-  bottom: 60px;
-  left: 12px;
+  bottom: 50px;
+  left: 0;
   background: var(--surface);
-  border-radius: 12px;
+  border-radius: 14px;
   box-shadow: var(--shadow);
   padding: 8px 0;
   z-index: 100;
-  display: none;
-  min-width: 180px;
+  min-width: 200px;
+  border: 1px solid var(--divider);
+  display: flex;
+  flex-direction: column;
+  animation: slideUpFade 0.18s ease-out;
+}
+
+html[dir="rtl"] .attach-menu {
+  left: auto;
+  right: 0;
+}
+
+.attach-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  font-size: 14px;
+  color: var(--text);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.attach-item:hover {
+  background: var(--hover);
+}
+
+.attach-item i {
+  font-size: 18px;
+  width: 22px;
+  text-align: center;
 }
 
 .attach-menu.show {
