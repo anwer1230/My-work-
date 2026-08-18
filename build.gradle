@@ -1,0 +1,15 @@
+task build(type: Exec) {
+    commandLine 'npm', 'run', 'build'
+}
+
+task lint(type: Exec) {
+    commandLine 'npm', 'run', 'lint'
+}
+
+task assembleDebug(type: Exec) {
+    commandLine 'npm', 'run', 'build'
+}
+
+task bundleRelease(type: Exec) {
+    commandLine 'npm', 'run', 'build'
+}
