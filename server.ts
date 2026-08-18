@@ -1180,18 +1180,22 @@ app.post('/api/telegram/simulate-incoming', (req: Request, res: Response) => {
   res.json({ success: true, message: simulatedMsg, chat });
 });
 
-// --- Chat Routes ---
+// --- Chat Routes (Optimized 0ms Cache First with Background MTProto Refresh) ---
 app.get('/api/chats', async (req: Request, res: Response) => {
+  // Trigger background refresh silently if telegram client is active
   if (isTelegramClientActive()) {
-    try {
-      const realDialogs = await getActiveTelegramDialogs();
-      if (realDialogs && realDialogs.length > 0) {
-        chatsStore = realDialogs;
-      }
-    } catch (e) {
-      console.log('Error syncing telegram dialogs:', e);
-    }
+    getActiveTelegramDialogs()
+      .then((realDialogs) => {
+        if (realDialogs && realDialogs.length > 0) {
+          chatsStore = realDialogs;
+          broadcastSSE('updateChats', chatsStore);
+        }
+      })
+      .catch((e) => {
+        console.log('Background sync telegram dialogs:', e?.message || e);
+      });
   }
+
   const mainChats = chatsStore.filter((c) => !c.is_archived).map(c => {
     const lastM: any = c.last_message;
     return {
@@ -1208,6 +1212,8 @@ app.get('/api/chats', async (req: Request, res: Response) => {
       } : undefined,
     };
   });
+
+  res.setHeader('Cache-Control', 'no-cache');
   res.json({ success: true, chats: mainChats });
 });
 
@@ -1498,14 +1504,15 @@ app.delete('/api/chats/:cid', (req: Request, res: Response) => {
 
 app.get('/api/dialogs', async (req: Request, res: Response) => {
   if (isTelegramClientActive()) {
-    try {
-      const realDialogs = await getActiveTelegramDialogs();
-      if (realDialogs && realDialogs.length > 0) {
-        chatsStore = realDialogs;
-      }
-    } catch (e) {
-      console.log('Error syncing telegram dialogs:', e);
-    }
+    getActiveTelegramDialogs()
+      .then((realDialogs) => {
+        if (realDialogs && realDialogs.length > 0) {
+          chatsStore = realDialogs;
+        }
+      })
+      .catch((e) => {
+        console.log('Background sync telegram dialogs:', e?.message || e);
+      });
   }
   const chatList = chatsStore.map(d => ({
     id: String(d.id),
@@ -1513,6 +1520,7 @@ app.get('/api/dialogs', async (req: Request, res: Response) => {
     unreadCount: d.unread_count || 0,
     lastMessage: d.last_message?.content?.text || (d.last_message?.content?.type === 'photo' ? '📷 صورة' : ''),
   }));
+  res.setHeader('Cache-Control', 'no-cache');
   res.json({ success: true, chats: chatList });
 });
 

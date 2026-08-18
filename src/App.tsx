@@ -57,7 +57,7 @@ import {
   clearStorageCache,
   getStorageCacheSummary,
 } from './lib/storageCache';
-import { syncEngine } from './lib/sync';
+import { syncEngine, telegramSyncEngine, SyncState } from './lib/sync';
 import { indexedDbService } from './lib/indexedDbService';
 import { sortChatsWithLastActivePriority, isGroupChat } from './utils/chatSorting';
 import './system-messages.css';
@@ -1606,9 +1606,44 @@ export default function App() {
 
   useEffect(() => {
     async function checkAuth() {
-      setIsCheckingAuth(true);
+      // 1. Telegram Android Optimistic Immediate Hydration (0ms)
+      const cachedUser = getCachedUserProfile();
+      const cachedChats = getCachedChats();
       const savedSession = localStorage.getItem('tg_session');
 
+      if (cachedUser) {
+        setCurrentUser(cachedUser);
+        setIsLoggedIn(true);
+        setIsCheckingAuth(false);
+      }
+
+      if (cachedChats && cachedChats.length > 0) {
+        setChats(cachedChats);
+      }
+
+      // If we have cached state, don't block the UI with full-screen loading
+      if (savedSession || cachedUser) {
+        setIsCheckingAuth(false);
+      } else {
+        setIsCheckingAuth(true);
+      }
+
+      // Start the official fast sync engine in background
+      telegramSyncEngine.start({
+        onChatsUpdated: (updatedChats) => {
+          if (updatedChats && updatedChats.length > 0) {
+            setChats((prev) => {
+              // Merge preserving local state
+              const map = new Map();
+              prev.forEach((c) => map.set(String(c.id), c));
+              updatedChats.forEach((c) => map.set(String(c.id), { ...map.get(String(c.id)), ...c }));
+              return Array.from(map.values());
+            });
+          }
+        },
+      });
+
+      // 2. Silent Background MTProto Session Validation
       if (savedSession) {
         try {
           const res = await fetch('/api/auth/restore-session', {
@@ -1631,17 +1666,17 @@ export default function App() {
             setIsCheckingAuth(false);
             return;
           } else {
-            // Stale or expired session on Telegram servers - clear from storage
             console.warn('Saved Telegram session is no longer valid:', data.error);
-            localStorage.removeItem('tg_session');
+            if (!cachedUser) {
+              localStorage.removeItem('tg_session');
+            }
           }
         } catch (e) {
-          console.log('Saved session restore failed:', e);
-          localStorage.removeItem('tg_session');
+          console.log('Saved session restore network fallback to cached:', e);
         }
       }
 
-      // Check server status
+      // Check server status in background
       try {
         const r = await fetch('/api/auth/status');
         const d = await r.json();
@@ -1652,21 +1687,21 @@ export default function App() {
           loadChats();
           fetchActualProfilePhoto();
         } else {
-          // If offline and we had previous cached session
-          if (!navigator.onLine && savedSession) {
+          if (cachedUser || savedSession) {
             setIsLoggedIn(true);
           } else {
             setIsLoggedIn(false);
           }
         }
       } catch (e) {
-        if (!navigator.onLine && savedSession) {
+        if (cachedUser || savedSession) {
           setIsLoggedIn(true);
         } else {
           setIsLoggedIn(false);
         }
+      } finally {
+        setIsCheckingAuth(false);
       }
-      setIsCheckingAuth(false);
     }
 
     checkAuth();
