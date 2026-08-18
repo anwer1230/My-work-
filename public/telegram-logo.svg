@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="tg-grad" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#2AABEE"/>
+      <stop offset="100%" stop-color="#229ED9"/>
+    </linearGradient>
+    <linearGradient id="tg-paper" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#EFF7FC"/>
+      <stop offset="100%" stop-color="#FFFFFF"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+  <circle cx="256" cy="256" r="256" fill="url(#tg-grad)"/>
+  <g filter="url(#shadow)">
+    <path fill="#C8DAEA" d="M116 250l110 42 42 128 32-58 108 80 58-278L116 250z"/>
+    <path fill="#A9C6D8" d="M226 292l42 128 20-74-62-54z"/>
+    <path fill="url(#tg-paper)" d="M466 164L116 250l110 42 174-114-132 134 148 110 50-258z"/>
+  </g>
+</svg>

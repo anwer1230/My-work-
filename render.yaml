@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: telegram-enjaz-pro
+    runtime: node
+    plan: free
+    region: frankfurt
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    envVars:
+      - key: NODE_VERSION
+        value: 20.18.0
+      - key: NODE_ENV
+        value: production
+      - key: TDLIB_API_ID
+        value: "22043994"
+      - key: TDLIB_API_HASH
+        value: "56f64582b363d367280db96586b97801"

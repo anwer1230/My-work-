@@ -1,0 +1,106 @@
+{
+  "id": "/",
+  "name": "Telegram",
+  "short_name": "Telegram",
+  "description": "Fast. Secure. Powerful. Official Telegram Web & Android App with MTProto Cloud Sync and Offline Engine.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": [
+    "window-controls-overlay",
+    "standalone",
+    "minimal-ui"
+  ],
+  "orientation": "any",
+  "theme_color": "#17212b",
+  "background_color": "#17212b",
+  "lang": "ar",
+  "dir": "rtl",
+  "categories": [
+    "social",
+    "communication",
+    "productivity",
+    "utilities"
+  ],
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "/telegram-logo.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/telegram-logo.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "محادثة جديدة",
+      "short_name": "محادثة جديدة",
+      "description": "بدء محادثة تليجرام جديدة",
+      "url": "/?action=new_chat",
+      "icons": [
+        {
+          "src": "/telegram-logo.svg",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "الرسائل المحفوظة",
+      "short_name": "المحفوظات",
+      "description": "فتح الرسائل والملاحظات المحفوظة",
+      "url": "/?action=saved_messages",
+      "icons": [
+        {
+          "src": "/telegram-logo.svg",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "المكالمات",
+      "short_name": "المكالمات",
+      "description": "سجل المكالمات الصوتية والمرئية",
+      "url": "/?action=calls",
+      "icons": [
+        {
+          "src": "/telegram-logo.svg",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "الإعدادات",
+      "short_name": "الإعدادات",
+      "description": "إعدادات الحساب والخصوصية والمظهر",
+      "url": "/?action=settings",
+      "icons": [
+        {
+          "src": "/telegram-logo.svg",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ],
+  "share_target": {
+    "action": "/share-target",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url",
+      "files": [
+        {
+          "name": "media",
+          "accept": ["image/*", "video/*", "audio/*", "application/pdf"]
+        }
+      ]
+    }
+  }
+}
