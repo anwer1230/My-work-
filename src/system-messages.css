@@ -1,0 +1,31 @@
+.system-message {
+  text-align: center;
+  color: #8e9aa7;
+  font-size: 13px;
+  padding: 6px 12px;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 20px;
+  margin: 8px auto;
+  max-width: 80%;
+  display: inline-block;
+}
+
+.system-message.restriction {
+  color: #e74c3c;
+  background: rgba(231, 76, 60, 0.1);
+}
+
+.system-message.admin {
+  color: #f1c40f;
+  background: rgba(241, 196, 15, 0.1);
+}
+
+.system-message.join {
+  color: #2ecc71;
+  background: rgba(46, 204, 113, 0.1);
+}
+
+.system-message.leave {
+  color: #95a5a6;
+  background: rgba(149, 165, 166, 0.1);
+}
