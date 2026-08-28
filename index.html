@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ar" dir="rtl" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>مركز سرعة إنجاز - اللوحة الاحترافية</title>
+    <meta name="theme-color" content="#121421" />
+    <meta name="description" content="مركز سرعة انجاز للخدمات الطلابية والأكاديمية - نظام التليجرام التلقائي واللوحة الاحترافية" />
+    <link rel="manifest" href="/manifest.json" />
+
+    <!-- الخطوط والأيقونات -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+
+    <!-- iOS PWA — نستخدم app-logo.png لكل الأحجام -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="سرعة انجاز" />
+    <link rel="apple-touch-icon" href="/static/icons/app-logo.png" />
+    <link rel="apple-touch-icon" sizes="57x57" href="/static/icons/app-logo.png" />
+    <link rel="apple-touch-icon" sizes="72x72" href="/static/icons/app-logo.png" />
+    <link rel="apple-touch-icon" sizes="76x76" href="/static/icons/app-logo.png" />
+    <link rel="apple-touch-icon" sizes="114x114" href="/static/icons/app-logo.png" />
+    <link rel="apple-touch-icon" sizes="120x120" href="/static/icons/app-logo.png" />
+    <link rel="apple-touch-icon" sizes="144x144" href="/static/icons/app-logo.png" />
+    <link rel="apple-touch-icon" sizes="152x152" href="/static/icons/app-logo.png" />
+    <link rel="apple-touch-icon" sizes="167x167" href="/static/icons/app-logo.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/icons/app-logo.png" />
+
+    <!-- Android PWA -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="application-name" content="سرعة انجاز" />
+    <link rel="icon" type="image/png" sizes="72x72" href="/static/icons/app-logo.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/static/icons/app-logo.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/static/icons/app-logo.png" />
+    <link rel="shortcut icon" href="/static/icons/app-logo.png" />
+
+    <title>مركز سرعة انجاز للخدمات الطلابية والأكاديمية</title>
+
+    <script>
+      window.__pwa_deferred = null;
+      window.addEventListener('beforeinstallprompt', function(e) {
+          e.preventDefault();
+          window.__pwa_deferred = e;
+          console.log('✅ PWA: beforeinstallprompt captured early');
+          var btn = document.getElementById('pwaInstallBtn');
+          var lbl = document.getElementById('pwaInstallLabel');
+          if (btn) btn.classList.add('pwa-ready');
+          if (lbl) lbl.textContent = '📲 تثبيت التطبيق مباشرةً';
+      });
+      window.addEventListener('appinstalled', function() {
+          window.__pwa_deferred = null;
+          var btn = document.getElementById('pwaInstallBtn');
+          var msg = document.getElementById('pwaInstalledMsg');
+          if (btn) btn.style.display = 'none';
+          if (msg) msg.style.display = 'block';
+      });
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
