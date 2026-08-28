@@ -1391,11 +1391,16 @@ export default function App() {
             fetchActualProfilePhoto();
             setIsCheckingAuth(false);
             return;
+          } else if (data.sessionExpired) {
+            console.log('Session expired on Telegram DC, clearing obsolete session.');
+            localStorage.removeItem('tg_session');
+            UserConfig.getInstance(0).clearConfig();
+            MessagesController.getInstance(0).cleanup();
+            setIsLoggedIn(false);
           }
         } catch (e) {
-          console.log('Saved session restore failed, using cached session:', e);
-          // If network failed (offline), but we have a saved session, keep logged in with cached data
-          if (savedSession) {
+          console.log('Saved session restore failed or network offline:', e);
+          if (!navigator.onLine && savedSession) {
             setIsLoggedIn(true);
             const cachedChats = getCachedChats();
             if (cachedChats.length > 0) {

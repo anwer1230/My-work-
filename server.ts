@@ -599,7 +599,9 @@ app.post('/api/auth/password', async (req: Request, res: Response) => {
 
 app.post('/api/auth/restore-session', async (req: Request, res: Response) => {
   const { session } = req.body;
-  if (!session) return res.status(400).json({ success: false, error: 'Session string is required' });
+  if (!session || typeof session !== 'string' || session.trim() === '') {
+    return res.json({ success: false, sessionExpired: true, error: 'Session string is required' });
+  }
 
   try {
     const result = await restoreTelegramSession(session);
@@ -616,8 +618,12 @@ app.post('/api/auth/restore-session', async (req: Request, res: Response) => {
     broadcastSSE('updateChats', chatsStore);
     res.json({ success: true, user: profileStore, dialogs: chatsStore });
   } catch (e: any) {
-    console.error('Session restore failed:', e);
-    res.status(400).json({ success: false, error: e?.message || 'انتهت صلاحية الجلسة' });
+    console.warn('Session restore info (expired or invalid session):', e?.message || e);
+    res.json({
+      success: false,
+      sessionExpired: true,
+      error: e?.message || 'انتهت صلاحية الجلسة السحابية. يرجى تسجيل الدخول مجدداً.',
+    });
   }
 });
 
