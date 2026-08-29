@@ -34,6 +34,7 @@ import { telegramDb, initTelegramDexieDb } from '../core/telegramDexieDb';
 import { multiAccountManager } from '../utils/MultiAccountManager';
 import { notificationEngine } from '../services/NotificationEngine';
 import { SecureSessionStorage } from '../utils/secureSessionStorage';
+import { storageSyncManager } from '../utils/StorageSyncManager';
 import {
   messagesController,
   messagesStorage,
@@ -565,6 +566,23 @@ export const TelegramProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   // Multi-tier recovery from IndexedDB backup on startup if localStorage was cleared
   useEffect(() => {
+    // Restore drafts into active chats state
+    const existingDrafts = storageSyncManager.getAllDrafts();
+    if (Object.keys(existingDrafts).length > 0) {
+      setChats((prev) =>
+        prev.map((c) =>
+          existingDrafts[c.id] ? { ...c, draft: existingDrafts[c.id] } : c
+        )
+      );
+    }
+
+    // Load persisted custom settings
+    storageSyncManager.loadSettings().then((savedSettings) => {
+      if (savedSettings) {
+        setSettings((prev) => ({ ...prev, ...savedSettings }));
+      }
+    }).catch(() => {});
+
     SecureSessionStorage.restoreFromIndexedDBBackup([
       'tg_multi_accounts_v3',
       'tg_active_account_id_v3',
@@ -595,6 +613,7 @@ export const TelegramProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         if (accounts && accounts.length > 0) {
           SecureSessionStorage.setItem('tg_multi_accounts_v3', accounts);
           SecureSessionStorage.setItem('tg_active_account_id_v3', activeAccountId);
+          storageSyncManager.saveSessions(accounts, activeAccountId);
           const activeAcc = accounts.find((a) => a.id === activeAccountId) || accounts[0];
           if (activeAcc && activeAcc.user) {
             UserConfig.getInstance(0).setCurrentUser(activeAcc.user);
@@ -926,6 +945,7 @@ export const TelegramProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       setAccounts([]);
       setIsAuthenticated(false);
       setActiveAccountId('');
+      storageSyncManager.clearAllOnLogout();
       try {
         SecureSessionStorage.setItem('tg_explicitly_logged_out', 'true');
         SecureSessionStorage.removeItem('tg_auth_session_active');
@@ -1194,6 +1214,7 @@ export const TelegramProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const updateSettings = (newSettings: Partial<AppSettings>) => {
     setSettings((prev) => {
       const updated = { ...prev, ...newSettings };
+      storageSyncManager.saveSettings(updated);
       setAccounts((prevAccs) => {
         const nextAccs = prevAccs.map((acc) => {
           if (acc.id === activeAccountId) {
@@ -1242,6 +1263,8 @@ export const TelegramProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if (!chatId) return;
     const trimmed = draftText.trim();
     const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    storageSyncManager.setDraft(chatId, draftText);
 
     setChats((prev) =>
       prev.map((c) => {

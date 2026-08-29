@@ -57,6 +57,9 @@ public class MessagesStorage {
             database.executeFast("CREATE TABLE IF NOT EXISTS users(uid INTEGER PRIMARY KEY, name TEXT, status INTEGER, data BLOB);");
             database.executeFast("CREATE TABLE IF NOT EXISTS dialogs(did INTEGER PRIMARY KEY, date INTEGER, unread_count INTEGER, last_mid INTEGER, inbox_max INTEGER, outbox_max INTEGER, pinned INTEGER, data BLOB);");
             database.executeFast("CREATE TABLE IF NOT EXISTS chats(uid INTEGER PRIMARY KEY, name TEXT, data BLOB);");
+            database.executeFast("CREATE TABLE IF NOT EXISTS bot_keyboard(uid INTEGER PRIMARY KEY, mid INTEGER, info BLOB);");
+            database.executeFast("CREATE TABLE IF NOT EXISTS chat_drafts(did INTEGER PRIMARY KEY, text TEXT, date INTEGER, data BLOB);");
+            database.executeFast("CREATE TABLE IF NOT EXISTS user_settings(key TEXT PRIMARY KEY, val TEXT);");
             database.executeFast("CREATE INDEX IF NOT EXISTS mid_idx_messages ON messages(mid);");
             database.executeFast("CREATE INDEX IF NOT EXISTS uid_idx_messages ON messages(uid);");
         } catch (Exception e) {
@@ -179,5 +182,38 @@ public class MessagesStorage {
             // Query handled
         }
         return result;
+    }
+
+    public void saveDraft(long did, String text) {
+        if (database == null) return;
+        try {
+            if (text == null || text.trim().isEmpty()) {
+                database.executeFast("DELETE FROM chat_drafts WHERE did = " + did);
+            } else {
+                SQLitePreparedStatement state = database.prepareStatement("REPLACE INTO chat_drafts VALUES(?, ?, ?, NULL)");
+                state.bindLong(1, did);
+                state.bindString(2, text);
+                state.bindInteger(3, (int)(System.currentTimeMillis() / 1000));
+                state.step();
+                state.dispose();
+            }
+        } catch (Exception e) {
+            // Handled
+        }
+    }
+
+    public String getDraft(long did) {
+        if (database == null) return null;
+        String draft = null;
+        try {
+            SQLiteCursor cursor = database.queryFinalized("SELECT text FROM chat_drafts WHERE did = ?", did);
+            if (cursor.next()) {
+                draft = cursor.stringValue(0);
+            }
+            cursor.dispose();
+        } catch (Exception e) {
+            // Handled
+        }
+        return draft;
     }
 }
