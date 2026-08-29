@@ -229,6 +229,17 @@ interface TelegramContextType {
 
 const TelegramContext = createContext<TelegramContextType | undefined>(undefined);
 
+const DEFAULT_APP_SETTINGS: AppSettings = {
+  theme: 'dark',
+  accentColor: '#5288c1',
+  fontSize: 16,
+  language: 'ar',
+  sendByEnter: true,
+  soundEffects: true,
+  autoDownloadMedia: true,
+  chatWallpaper: 'default',
+};
+
 export const TelegramProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // 1. Resilient Multi-Tier Encrypted Session Persistence & State
   const [accounts, setAccounts] = useState<UserAccount[]>(() => {
@@ -377,16 +388,7 @@ export const TelegramProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [inAppNotifications, setInAppNotifications] = useState<InAppNotification[]>([]);
 
   const [apiConfig, setApiConfig] = useState<TelegramApiConfig>(DEFAULT_TELEGRAM_API_CONFIG);
-  const [settings, setSettings] = useState<AppSettings>(initialActiveAcc.settings || {
-    theme: 'dark',
-    accentColor: '#5288c1',
-    fontSize: 16,
-    language: 'ar',
-    sendByEnter: true,
-    soundEffects: true,
-    autoDownloadMedia: true,
-    chatWallpaper: 'default',
-  });
+  const [settings, setSettings] = useState<AppSettings>(() => initialActiveAcc?.settings || DEFAULT_APP_SETTINGS);
   const [settingsSubPage, setSettingsSubPage] = useState<SettingsSubPage>('main');
 
   // Incremental Pagination & Stream Sync States
@@ -744,16 +746,7 @@ export const TelegramProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     setActiveAccountId(targetAccountId);
     setCurrentUser(targetAcc.user);
-    setSettings(targetAcc.settings || {
-      theme: 'dark',
-      accentColor: '#2481cc',
-      fontSize: 16,
-      language: 'ar',
-      sendByEnter: true,
-      soundEffects: true,
-      autoDownloadMedia: true,
-      chatWallpaper: 'pattern_classic',
-    });
+    setSettings(targetAcc.settings || DEFAULT_APP_SETTINGS);
     setChats(targetAcc.chats || []);
     setMessages(targetAcc.messages || {});
     setActiveChatId(targetAcc.chats?.[0]?.id || 'chat_saved_messages');
@@ -772,7 +765,7 @@ export const TelegramProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     } catch {}
 
     showToast(
-      (targetAcc.settings?.language || settings.language) === 'ar'
+      (targetAcc.settings?.language || settings?.language || 'ar') === 'ar'
         ? `تم التبديل إلى حساب: ${targetAcc.user.name}`
         : `Switched to account: ${targetAcc.user.name}`,
       '👤'
@@ -965,9 +958,9 @@ export const TelegramProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       UserConfig.getInstance(0).setCurrentUser(nextAcc.user);
       setActiveAccountId(nextAcc.id);
       setCurrentUser(nextAcc.user);
-      setSettings(nextAcc.settings);
-      setChats(nextAcc.chats);
-      setMessages(nextAcc.messages);
+      setSettings(nextAcc.settings || DEFAULT_APP_SETTINGS);
+      setChats(nextAcc.chats || []);
+      setMessages(nextAcc.messages || {});
       setActiveChatId(nextAcc.chats[0]?.id || 'chat_saved_messages');
       try {
         SecureSessionStorage.setItem('tg_active_account_id_v3', nextAcc.id);
