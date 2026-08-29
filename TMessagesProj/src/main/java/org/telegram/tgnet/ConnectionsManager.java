@@ -32,6 +32,7 @@ public class ConnectionsManager {
     private final int currentAccount;
     private int connectionState = ConnectionStateConnected;
     private int lastRequestToken = 1;
+    private boolean isPaused = false;
 
     public interface RequestDelegate {
         void run(TLObject response, TLRPC.TL_error error);
@@ -55,6 +56,29 @@ public class ConnectionsManager {
 
     public int getConnectionState() {
         return connectionState;
+    }
+
+    /**
+     * Suspends TCP socket connection and stops keep-alive ping timers when in background
+     */
+    public void pauseNetwork() {
+        if (isPaused) {
+            return;
+        }
+        isPaused = true;
+        native_pauseNetwork(currentAccount);
+    }
+
+    /**
+     * Resumes TCP socket connection immediately and triggers difference resynchronization
+     */
+    public void resumeNetwork(boolean isScreenOn) {
+        if (!isPaused) {
+            return;
+        }
+        isPaused = false;
+        native_resumeNetwork(currentAccount, isScreenOn);
+        MessagesController.getInstance(currentAccount).getDifference();
     }
 
     public int sendRequest(final TLObject object, final RequestDelegate onComplete) {
@@ -116,4 +140,6 @@ public class ConnectionsManager {
     public static native int native_sendRequest(int account, long bufferAddress, RequestDelegateInternal onComplete, int flags);
     public static native void native_cancelRequest(int account, int token, boolean notifyServer);
     public static native void native_cleanUp(int account, boolean resetKeys);
+    public static native void native_pauseNetwork(int account);
+    public static native void native_resumeNetwork(int account, boolean isScreenOn);
 }

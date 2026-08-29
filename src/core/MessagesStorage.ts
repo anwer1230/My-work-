@@ -278,6 +278,27 @@ export class MessagesStorage {
   }
 
   /**
+   * Saves a single message to local database and notifies listeners
+   */
+  public saveMessage(msg: Message): void {
+    if (!msg || !msg.id) return;
+    const dialogId = msg.chatId || 'dialog_0';
+    this.putMessages([msg], dialogId);
+  }
+
+  /**
+   * Persists sync difference state parameters
+   */
+  public saveDiffParams(pts: number, seq: number, date: number, qts: number): void {
+    try {
+      localStorage.setItem(
+        `tg_diff_params_${this.currentAccount}`,
+        JSON.stringify({ pts, seq, date, qts })
+      );
+    } catch (e) {}
+  }
+
+  /**
    * Marks all messages up to maxId as read
    */
   public markMessagesAsRead(dialogId: string | number, maxId: string | number): void {

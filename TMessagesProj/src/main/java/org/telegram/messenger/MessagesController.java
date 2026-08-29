@@ -23,6 +23,13 @@ public class MessagesController {
     private final ArrayList<TLRPC.Dialog> dialogs = new ArrayList<>();
     private static volatile MessagesController[] Instance = new MessagesController[AccountInstance.MAX_ACCOUNT_COUNT];
 
+    // Synchronization state tracking
+    public int pts = 0;
+    public int seq = 0;
+    public int lastDate = 0;
+    public int qts = 0;
+    private boolean gettingDifference = false;
+
     public static MessagesController getInstance(int num) {
         MessagesController localInstance = Instance[num];
         if (localInstance == null) {
@@ -583,10 +590,89 @@ public class MessagesController {
         });
     }
 
+    public void getDifference() {
+        if (gettingDifference) {
+            return;
+        }
+        gettingDifference = true;
+
+        TLRPC.TL_updates_getDifference req = new TLRPC.TL_updates_getDifference();
+        req.pts = this.pts;
+        req.pts_total_limit = 1000;
+        req.date = this.lastDate;
+        req.qts = this.qts;
+
+        ConnectionsManager.getInstance(currentAccount).sendRequest(req, (response, error) -> {
+            if (error == null) {
+                if (response instanceof TLRPC.TL_updates_difference) {
+                    TLRPC.TL_updates_difference diff = (TLRPC.TL_updates_difference) response;
+                    putUsers(diff.users, false);
+                    putChats(diff.chats, false);
+
+                    if (diff.new_messages != null && !diff.new_messages.isEmpty()) {
+                        for (TLRPC.Message message : diff.new_messages) {
+                            MessagesStorage.getInstance(currentAccount).putMessages(
+                                message, message.out, false, false, 0
+                            );
+                        }
+                    }
+
+                    if (diff.other_updates != null) {
+                        for (TLRPC.Update update : diff.other_updates) {
+                            processSingleUpdate(update);
+                        }
+                    }
+
+                    if (diff.state != null) {
+                        pts = diff.state.pts;
+                        seq = diff.state.seq;
+                        lastDate = diff.state.date;
+                        qts = diff.state.qts;
+                    }
+
+                    gettingDifference = false;
+                    AndroidUtilities.runOnUIThread(() -> {
+                        NotificationCenter.getInstance(currentAccount).postNotificationName(NotificationCenter.dialogsNeedReload);
+                    });
+                } else if (response instanceof TLRPC.TL_updates_differenceSlice) {
+                    TLRPC.TL_updates_differenceSlice slice = (TLRPC.TL_updates_differenceSlice) response;
+                    if (slice.intermediate_state != null) {
+                        pts = slice.intermediate_state.pts;
+                        seq = slice.intermediate_state.seq;
+                        lastDate = slice.intermediate_state.date;
+                        qts = slice.intermediate_state.qts;
+                    }
+                    gettingDifference = false;
+                    getDifference();
+                } else {
+                    gettingDifference = false;
+                }
+            } else {
+                gettingDifference = false;
+            }
+        });
+    }
+
     public void processUpdates(TLRPC.Updates updates, boolean isDifference) {
         if (updates == null) return;
         if (updates instanceof TLRPC.TL_updates) {
-            for (TLRPC.Update update : ((TLRPC.TL_updates) updates).updates) {
+            TLRPC.TL_updates u = (TLRPC.TL_updates) updates;
+            putUsers(u.users, false);
+            putChats(u.chats, false);
+
+            if (u.seq != 0) {
+                this.seq = u.seq;
+                this.lastDate = u.date;
+            }
+
+            for (TLRPC.Update update : u.updates) {
+                if (update.pts > 0 && update.pts_count > 0) {
+                    if (this.pts != 0 && this.pts + update.pts_count != update.pts) {
+                        getDifference();
+                        return;
+                    }
+                    this.pts = update.pts;
+                }
                 processSingleUpdate(update);
             }
         }
@@ -597,6 +683,9 @@ public class MessagesController {
             TLRPC.TL_updateNewMessage newMessageUpdate = (TLRPC.TL_updateNewMessage) update;
             TLRPC.Message message = newMessageUpdate.message;
             if (message != null) {
+                MessagesStorage.getInstance(currentAccount).putMessages(
+                    message, message.out, false, false, 0
+                );
                 MessageObject obj = new MessageObject(currentAccount, message, true, true);
                 AndroidUtilities.runOnUIThread(() -> {
                     NotificationCenter.getInstance(currentAccount).postNotificationName(

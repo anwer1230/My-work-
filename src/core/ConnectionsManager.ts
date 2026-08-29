@@ -133,9 +133,16 @@ export class ConnectionsManager {
     this.startNetworkPingLoop();
   }
 
-  public resumeNetworkMaybe() {
+  public resumeNetworkMaybe(isScreenOn: boolean = true) {
+    if (!this.isPaused) return;
     this.isPaused = false;
     this.updateState('CONNECTION_STATE_UPDATING');
+    
+    // Import and trigger difference reconciliation
+    import('./MessagesController').then(({ MessagesController }) => {
+      MessagesController.getInstance(this.accountNum).getDifference();
+    }).catch(() => {});
+
     setTimeout(() => {
       this.updateState('CONNECTION_STATE_CONNECTED');
     }, 250);

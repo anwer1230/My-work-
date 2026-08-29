@@ -76,6 +76,28 @@ export namespace TLRPC {
     config: 590174469,
   };
 
+  export interface TL_updates_getDifference {
+    _: 'TL_updates_getDifference';
+    pts: number;
+    pts_total_limit?: number;
+    date: number;
+    qts: number;
+  }
+
+  export interface TL_updates_difference {
+    _: 'TL_updates_difference';
+    new_messages: any[];
+    other_updates: any[];
+    users: any[];
+    chats: any[];
+    state: {
+      pts: number;
+      seq: number;
+      date: number;
+      qts: number;
+    };
+  }
+
   // Base TLObject
   export abstract class TLObject {
     public disableFree = false;

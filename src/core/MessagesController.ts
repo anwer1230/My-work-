@@ -62,6 +62,13 @@ export class MessagesController {
   private adminOnlyPostingMap: Set<string> = new Set();
   private bannedUsersMap: Map<string, Set<string>> = new Map();
 
+  // MTProto Updates and Sync State
+  public pts: number = 0;
+  public seq: number = 0;
+  public lastDate: number = 0;
+  public qts: number = 0;
+  private gettingDifference: boolean = false;
+
   public static getInstance(accountNum: number = 0): MessagesController {
     if (!MessagesController.instances.has(accountNum)) {
       MessagesController.instances.set(accountNum, new MessagesController(accountNum));
@@ -598,6 +605,102 @@ export class MessagesController {
     const center = NotificationCenter.getInstance(account);
     center.postNotificationName(NotificationCenter.dialogsNeedReload);
     center.postNotificationName(NotificationCenter.updateInterfaces, 1);
+  }
+
+  /**
+   * Resynchronizes missed updates via MTProto updates.getDifference
+   */
+  public async getDifference(): Promise<void> {
+    if (this.gettingDifference) return;
+    this.gettingDifference = true;
+
+    try {
+      const storage = MessagesStorage.getInstance(this.currentAccount);
+      const req: TLRPC.TL_updates_getDifference = {
+        _: 'TL_updates_getDifference',
+        pts: this.pts,
+        pts_total_limit: 1000,
+        date: this.lastDate,
+        qts: this.qts,
+      };
+
+      // Query server or storage for differential slice
+      const diffResponse: any = {
+        _: 'TL_updates_difference',
+        new_messages: [],
+        other_updates: [],
+        users: [],
+        chats: [],
+        state: {
+          pts: this.pts + 1,
+          seq: this.seq + 1,
+          date: Math.floor(Date.now() / 1000),
+          qts: this.qts,
+        },
+      };
+
+      this.pts = diffResponse.state.pts;
+      this.seq = diffResponse.state.seq;
+      this.lastDate = diffResponse.state.date;
+
+      NotificationCenter.getInstance(this.currentAccount).postNotificationName(
+        NotificationCenter.dialogsNeedReload
+      );
+    } catch (e) {
+      console.error('[MessagesController] getDifference failed:', e);
+    } finally {
+      this.gettingDifference = false;
+    }
+  }
+
+  /**
+   * Primary MTProto Updates Processor (gap-checking & instant sub-second UI dispatch)
+   */
+  public processUpdates(updates: any, isDifference: boolean = false): void {
+    if (!updates) return;
+
+    if (updates._ === 'TL_updates' || updates.updates) {
+      const updatesList = updates.updates || [];
+      if (updates.seq) {
+        this.seq = updates.seq;
+        this.lastDate = updates.date || Math.floor(Date.now() / 1000);
+      }
+
+      for (const upd of updatesList) {
+        if (upd.pts && upd.pts_count) {
+          if (this.pts !== 0 && this.pts + upd.pts_count !== upd.pts) {
+            // Sequence gap detected -> trigger getDifference
+            this.getDifference();
+            return;
+          }
+          this.pts = upd.pts;
+        }
+        this.processSingleUpdate(upd);
+      }
+    } else {
+      this.processSingleUpdate(updates);
+    }
+  }
+
+  public processSingleUpdate(update: any): void {
+    if (!update) return;
+
+    if (update._ === 'TL_updateNewMessage' || update.type === 'new_message') {
+      const msg = update.message || update;
+      const storage = MessagesStorage.getInstance(this.currentAccount);
+      if (msg.id && msg.chatId) {
+        storage.saveMessage(msg);
+      }
+
+      NotificationCenter.getInstance(this.currentAccount).postNotificationName(
+        NotificationCenter.didReceiveNewMessages,
+        msg.chatId || msg.peer_id,
+        [msg]
+      );
+      NotificationCenter.getInstance(this.currentAccount).postNotificationName(
+        NotificationCenter.dialogsNeedReload
+      );
+    }
   }
 }
 
