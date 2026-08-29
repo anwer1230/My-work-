@@ -1,0 +1,231 @@
+import React, { useState } from 'react';
+import {
+  ArrowLeft,
+  Phone,
+  Video,
+  Search,
+  MoreVertical,
+  BadgeCheck,
+  Bookmark,
+  Bot,
+  Megaphone,
+  Users,
+  PanelRight,
+  Download,
+  Sparkles,
+  Lock,
+  ShieldCheck,
+} from 'lucide-react';
+import { useTelegram } from '../../context/TelegramContext';
+
+export const ChatHeader: React.FC = () => {
+  const {
+    activeChat,
+    setActiveChatId,
+    startCall,
+    isRightPanelOpen,
+    setIsRightPanelOpen,
+    setActiveModal,
+    settings,
+  } = useTelegram();
+
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  if (!activeChat) return null;
+
+  const isSavedMessages = activeChat.type === 'saved';
+  const isArabic = settings.language === 'ar';
+
+  const getSubtitle = () => {
+    if (isSavedMessages) {
+      return isArabic ? 'مساحتك السحابية الخاصة' : 'Personal Cloud Storage';
+    }
+    if (activeChat.type === 'channel') {
+      const count = activeChat.memberCount
+        ? (activeChat.memberCount / 1000).toFixed(1) + 'K'
+        : '950K';
+      return isArabic ? `${count} مشترك` : `${count} subscribers`;
+    }
+    if (activeChat.type === 'group') {
+      return isArabic
+        ? `${activeChat.memberCount || 120} عضو، ${activeChat.onlineCount || 14} متصل`
+        : `${activeChat.memberCount || 120} members, ${activeChat.onlineCount || 14} online`;
+    }
+    if (activeChat.type === 'bot') {
+      return isArabic ? 'بوت' : 'bot';
+    }
+    return isArabic ? 'متصل الآن' : 'online';
+  };
+
+  return (
+    <div
+      id="tg-chat-header"
+      className="h-14 px-3 flex items-center justify-between border-b select-none shrink-0 z-10"
+      style={{
+        backgroundColor: 'var(--tg-theme-surface)',
+        borderColor: 'var(--tg-theme-border)',
+      }}
+    >
+      {/* Left side: Back on mobile + Avatar + Title & Status */}
+      <div className="flex items-center gap-3 min-w-0">
+        {/* Back button for mobile view */}
+        <button
+          id="tg-header-back-button"
+          onClick={() => setActiveChatId(null)}
+          className="md:hidden p-1.5 -ml-1 text-gray-400 hover:text-gray-200 rounded-full"
+        >
+          <ArrowLeft className="w-5 h-5 rtl:rotate-180" />
+        </button>
+
+        {/* Avatar */}
+        <div
+          onClick={() => setIsRightPanelOpen(!isRightPanelOpen)}
+          className="relative w-10 h-10 rounded-full overflow-hidden flex items-center justify-center bg-gradient-to-tr from-sky-600 to-cyan-500 text-white font-bold text-base cursor-pointer shrink-0 shadow-sm"
+        >
+          {isSavedMessages ? (
+            <div className="w-full h-full bg-[#2481cc] flex items-center justify-center">
+              <Bookmark className="w-5 h-5 fill-white text-white" />
+            </div>
+          ) : activeChat.avatar ? (
+            <img
+              src={activeChat.avatar}
+              alt={activeChat.title}
+              className="w-full h-full object-cover"
+              referrerPolicy="no-referrer"
+            />
+          ) : (
+            <span>{activeChat.title.charAt(0).toUpperCase()}</span>
+          )}
+
+          {activeChat.type === 'private' && (
+            <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-[var(--tg-theme-surface)] rounded-full" />
+          )}
+        </div>
+
+        {/* Title & Subtitle */}
+        <div
+          onClick={() => setIsRightPanelOpen(!isRightPanelOpen)}
+          className="min-w-0 cursor-pointer"
+        >
+          <div className="flex items-center gap-1">
+            {activeChat.isSecret && (
+              <Lock className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+            )}
+            <span
+              className={`font-bold text-sm truncate ${
+                activeChat.isSecret ? 'text-emerald-400' : ''
+              }`}
+              style={{
+                color: activeChat.isSecret ? '#34d399' : 'var(--tg-theme-bubble-in-text)',
+              }}
+            >
+              {activeChat.title}
+            </span>
+            {activeChat.isVerified && (
+              <BadgeCheck className="w-4 h-4 text-[#2481cc] shrink-0 fill-[#2481cc]/20" />
+            )}
+          </div>
+          <div className="text-xs text-sky-400/90 truncate font-medium">
+            {activeChat.isSecret ? (
+              <span className="text-emerald-300 font-mono text-[11px]">
+                🔒 E2EE Secret Chat {activeChat.ttlSeconds ? `(${activeChat.ttlSeconds}s TTL)` : ''}
+              </span>
+            ) : (
+              getSubtitle()
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Right side action icons */}
+      <div className="flex items-center gap-1 text-gray-400">
+        {activeChat.isSecret && (
+          <button
+            id="tg-secret-chat-info-btn"
+            onClick={() => setActiveModal('secret-chat-info' as any)}
+            className="p-2 rounded-full bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 border border-emerald-400/30 transition-colors"
+            title="إعدادات التشفير التام والمؤقت الذاتي"
+          >
+            <Lock className="w-4 h-4" />
+          </button>
+        )}
+
+        {activeChat.type === 'group' && (
+          <button
+            id="tg-group-admin-btn"
+            onClick={() => setActiveModal('group-admin' as any)}
+            className="p-2 rounded-full bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 border border-sky-400/20 transition-colors"
+            title="إدارة المجموعة والصلاحيات (TLRPC)"
+          >
+            <ShieldCheck className="w-4 h-4" />
+          </button>
+        )}
+
+        {!isSavedMessages && activeChat.type !== 'channel' && (
+          <>
+            <button
+              id="tg-start-audio-call"
+              onClick={() => startCall(false)}
+              className="p-2 rounded-full hover:bg-white/10 active:bg-white/15 hover:text-white transition-colors"
+              title={isArabic ? 'مكالمة صوتية مشفرة' : 'Encrypted Voice Call'}
+            >
+              <Phone className="w-4 h-4" />
+            </button>
+            <button
+              id="tg-start-video-call"
+              onClick={() => startCall(true)}
+              className="p-2 rounded-full hover:bg-white/10 active:bg-white/15 hover:text-white transition-colors"
+              title={isArabic ? 'مكالمة فيديو مشفرة' : 'Encrypted Video Call'}
+            >
+              <Video className="w-4 h-4" />
+            </button>
+          </>
+        )}
+
+        <button
+          id="tg-toggle-right-panel"
+          onClick={() => setIsRightPanelOpen(!isRightPanelOpen)}
+          className={`p-2 rounded-full hover:bg-white/10 active:bg-white/15 transition-colors ${
+            isRightPanelOpen ? 'text-[#2481cc] bg-white/5' : 'hover:text-white'
+          }`}
+          title={isArabic ? 'معلومات المحادثة' : 'Chat Info'}
+        >
+          <PanelRight className="w-4 h-4" />
+        </button>
+
+        {/* More Options Dropdown */}
+        <div className="relative">
+          <button
+            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+            className="p-2 rounded-full hover:bg-white/10 active:bg-white/15 hover:text-white transition-colors"
+          >
+            <MoreVertical className="w-4 h-4" />
+          </button>
+
+          {isDropdownOpen && (
+            <div
+              className="absolute right-0 rtl:right-auto rtl:left-0 top-10 w-52 bg-[#17212b] border border-[#2b394a] rounded-2xl shadow-2xl py-1.5 z-50 text-xs font-semibold text-gray-200 animate-in fade-in zoom-in-95"
+              onClick={() => setIsDropdownOpen(false)}
+            >
+              <button
+                onClick={() => setActiveModal('export-chat')}
+                className="w-full px-3.5 py-2.5 hover:bg-white/5 flex items-center gap-2.5 text-left rtl:text-right text-gray-200 hover:text-white"
+              >
+                <Download className="w-4 h-4 text-sky-400 shrink-0" />
+                <span>{isArabic ? 'تصدير سجل المحادثة' : 'Export Chat History'}</span>
+              </button>
+
+              <button
+                onClick={() => setActiveModal('mini-apps')}
+                className="w-full px-3.5 py-2.5 hover:bg-white/5 flex items-center gap-2.5 text-left rtl:text-right text-gray-200 hover:text-white"
+              >
+                <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
+                <span>{isArabic ? 'تطبيقات وألعاب (Mini Apps)' : 'Telegram Mini Apps'}</span>
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};

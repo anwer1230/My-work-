@@ -1,0 +1,6 @@
+{
+  "name": "Telegram Web Unified",
+  "description": "تطبيق تيليجرام ويب الموحد والمتكامل مع دعم TDLib، المصادقة، الوسائط المتعددة، الأزرار التفاعلية، ونظام تعدد الحسابات والترقيم المتزايد للرسائل",
+  "requestFramePermissions": ["microphone", "camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

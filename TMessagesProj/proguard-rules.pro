@@ -1,0 +1,3 @@
+-keep class org.telegram.** { *; }
+-dontwarn org.telegram.**
+-keepattributes *Annotation*

@@ -1,0 +1,84 @@
+apply plugin: 'com.android.application'
+apply plugin: 'com.google.gms.google-services'
+
+android {
+    namespace 'org.telegram.messenger'
+    compileSdkVersion 34
+
+    defaultConfig {
+        applicationId "org.telegram.messenger.anwer"
+        minSdkVersion 21
+        targetSdkVersion 34
+        versionCode 1
+        versionName "10.14.0"
+
+        multiDexEnabled true
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        ndk {
+            abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
+        }
+    }
+
+    signingConfigs {
+        debug {
+            if (file("config/debug.keystore").exists()) {
+                storeFile file("config/debug.keystore")
+                storePassword "android"
+                keyAlias "androiddebugkey"
+                keyPassword "android"
+            } else {
+                storeFile file("config/release.keystore")
+                storePassword "772997043aa"
+                keyAlias "Telegram_Anwer"
+                keyPassword "772997043aa"
+            }
+            v1SigningEnabled true
+            v2SigningEnabled true
+        }
+        release {
+            if (project.hasProperty("RELEASE_STORE_FILE")) {
+                storeFile file(RELEASE_STORE_FILE)
+                storePassword project.hasProperty("RELEASE_STORE_PASSWORD") ? RELEASE_STORE_PASSWORD : "772997043aa"
+                keyAlias project.hasProperty("RELEASE_KEY_ALIAS") ? RELEASE_KEY_ALIAS : "Telegram_Anwer"
+                keyPassword project.hasProperty("RELEASE_KEY_PASSWORD") ? RELEASE_KEY_PASSWORD : "772997043aa"
+            } else {
+                storeFile file("config/release.keystore")
+                storePassword "772997043aa"
+                keyAlias "Telegram_Anwer"
+                keyPassword "772997043aa"
+            }
+            v1SigningEnabled true
+            v2SigningEnabled true
+        }
+    }
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.release
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            signingConfig signingConfigs.debug
+            applicationIdSuffix ""
+            debuggable true
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'androidx.core:core-ktx:1.12.0'
+    implementation 'com.google.android.material:material:1.11.0'
+
+    // Google Services & Firebase Cloud Messaging
+    implementation platform('com.google.firebase:firebase-bom:33.1.0')
+    implementation 'com.google.firebase:firebase-messaging:24.0.1'
+    implementation 'com.google.firebase:firebase-analytics'
+}

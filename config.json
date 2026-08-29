@@ -1,0 +1,7 @@
+{
+  "NODE_VERSION": "20.18.0",
+  "NODE_ENV": "production",
+  "TDLIB_API_ID": "22043994",
+  "TDLIB_API_HASH": "56f64582b363d367280db96586b97801",
+  "PORT": 3000
+}

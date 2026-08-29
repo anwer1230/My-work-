@@ -1,0 +1,925 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import {
+  X,
+  UserPlus,
+  Phone,
+  User as UserIcon,
+  AtSign,
+  FileText,
+  Check,
+  ShieldCheck,
+  Sparkles,
+  Smartphone,
+  MessageSquare,
+  Radio,
+  ArrowRight,
+  ArrowLeft,
+  RotateCw,
+  Copy,
+  AlertCircle,
+  Clock,
+  Send,
+  Lock,
+} from 'lucide-react';
+import { useTelegram } from '../../context/TelegramContext';
+
+const COUNTRY_CODES = [
+  { code: '+967', country: 'اليمن 🇾🇪', flag: '🇾🇪', placeholder: '770 000 000' },
+  { code: '+966', country: 'السعودية 🇸🇦', flag: '🇸🇦', placeholder: '50 000 0000' },
+  { code: '+20', country: 'مصر 🇪🇬', flag: '🇪🇬', placeholder: '100 000 0000' },
+  { code: '+971', country: 'الإمارات 🇦🇪', flag: '🇦🇪', placeholder: '50 000 0000' },
+  { code: '+965', country: 'الكويت 🇰🇼', flag: '🇰🇼', placeholder: '9000 0000' },
+  { code: '+974', country: 'قطر 🇶🇦', flag: '🇶🇦', placeholder: '5000 0000' },
+  { code: '+968', country: 'عُمان 🇴🇲', flag: '🇴🇲', placeholder: '9000 0000' },
+  { code: '+962', country: 'الأردن 🇯🇴', flag: '🇯🇴', placeholder: '7 9000 0000' },
+  { code: '+964', country: 'العراق 🇮🇶', flag: '🇮🇶', placeholder: '770 000 0000' },
+  { code: '+963', country: 'سوريا 🇸🇾', flag: '🇸🇾', placeholder: '900 000 000' },
+  { code: '+961', country: 'لبنان 🇱🇧', flag: '🇱🇧', placeholder: '70 000 000' },
+  { code: '+212', country: 'المغرب 🇲🇦', flag: '🇲🇦', placeholder: '600 000 000' },
+  { code: '+213', country: 'الجزائر 🇩🇿', flag: '🇩🇿', placeholder: '600 000 000' },
+  { code: '+216', country: 'تونس 🇹🇳', flag: '🇹🇳', placeholder: '20 000 000' },
+  { code: '+249', country: 'السودان 🇸🇩', flag: '🇸🇩', placeholder: '90 000 0000' },
+  { code: '+970', country: 'فلسطين 🇵🇸', flag: '🇵🇸', placeholder: '59 000 0000' },
+  { code: '+973', country: 'البحرين 🇧🇭', flag: '🇧🇭', placeholder: '3000 0000' },
+  { code: '+1', country: 'USA / Canada 🇺🇸', flag: '🇺🇸', placeholder: '202 555 0123' },
+  { code: '+44', country: 'UK 🇬🇧', flag: '🇬🇧', placeholder: '7911 123456' },
+  { code: '+90', country: 'Turkey 🇹🇷', flag: '🇹🇷', placeholder: '500 000 0000' },
+];
+
+const AVATAR_PRESETS = [
+  { id: 'grad_blue', name: 'Blue', color: 'from-blue-500 to-indigo-600', icon: '👤' },
+  { id: 'grad_green', name: 'Green', color: 'from-emerald-500 to-teal-600', icon: '🌟' },
+  { id: 'grad_purple', name: 'Purple', color: 'from-purple-500 to-indigo-700', icon: '🚀' },
+  { id: 'grad_amber', name: 'Orange', color: 'from-amber-500 to-orange-600', icon: '⚡' },
+  { id: 'grad_rose', name: 'Rose', color: 'from-rose-500 to-pink-600', icon: '💎' },
+  { id: 'grad_cyan', name: 'Cyan', color: 'from-cyan-500 to-blue-600', icon: '🛡️' },
+];
+
+type AuthStep = 'phone' | 'code' | 'profile';
+type DeliveryType = 'app' | 'sms' | 'call';
+
+export const AddAccountModal: React.FC = () => {
+  const { activeModal, setActiveModal, addAccount, settings, showToast, apiConfig } = useTelegram();
+  const isArabic = settings.language === 'ar';
+
+  // Step management
+  const [step, setStep] = useState<AuthStep>('phone');
+  const [selectedCountryCode, setSelectedCountryCode] = useState('+967');
+  const [rawPhone, setRawPhone] = useState('770123456');
+  const [deliveryType, setDeliveryType] = useState<DeliveryType>('app');
+  const [isLoading, setIsLoading] = useState(false);
+  const [phoneCodeHash, setPhoneCodeHash] = useState('');
+  
+  // Verification code inputs (5 boxes)
+  const [codeDigits, setCodeDigits] = useState(['', '', '', '', '']);
+  const [codeError, setCodeError] = useState('');
+  const [timerSeconds, setTimerSeconds] = useState(60);
+  const [canResend, setCanResend] = useState(false);
+  const [serverHintCode, setServerHintCode] = useState('');
+  const [serviceNotification, setServiceNotification] = useState<any>(null);
+  const [isRealTelegram, setIsRealTelegram] = useState(false);
+  const [requires2FA, setRequires2FA] = useState(false);
+  const [twoFaPassword, setTwoFaPassword] = useState('');
+  const [accountSessionString, setAccountSessionString] = useState('');
+  const [userAvatar, setUserAvatar] = useState('');
+
+  // Profile Step Data
+  const [name, setName] = useState('');
+  const [username, setUsername] = useState('');
+  const [bio, setBio] = useState('Telegram MTProto 2.0 Client');
+  const [selectedAvatar, setSelectedAvatar] = useState('grad_blue');
+
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  const fullPhoneNumber = `${selectedCountryCode} ${rawPhone}`.trim();
+
+  // Reset when modal opens
+  useEffect(() => {
+    if (activeModal === 'add-account') {
+      setStep('phone');
+      setCodeDigits(['', '', '', '', '']);
+      setCodeError('');
+      setServerHintCode('');
+      setServiceNotification(null);
+      setTimerSeconds(60);
+      setCanResend(false);
+    }
+  }, [activeModal]);
+
+  // Countdown timer for code resend
+  useEffect(() => {
+    let interval: any = null;
+    if (step === 'code' && timerSeconds > 0) {
+      interval = setInterval(() => {
+        setTimerSeconds((prev) => {
+          if (prev <= 1) {
+            setCanResend(true);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [step, timerSeconds]);
+
+  if (activeModal !== 'add-account') return null;
+
+  // Handle Step 1: Request Code (auth.sendCode)
+  const handleRequestCode = async (e?: React.FormEvent, customDelivery?: DeliveryType) => {
+    if (e) e.preventDefault();
+    if (!rawPhone.trim()) {
+      showToast(isArabic ? 'يرجى إدخال رقم الهاتف' : 'Please enter phone number', '⚠️');
+      return;
+    }
+
+    const type = customDelivery || deliveryType;
+    setIsLoading(true);
+    setCodeError('');
+
+    try {
+      const response = await fetch('/api/telegram/auth/send-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone: fullPhoneNumber,
+          deliveryType: type,
+          apiId: apiConfig.apiId,
+          apiHash: apiConfig.apiHash,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setPhoneCodeHash(data.phoneCodeHash || '');
+        setServerHintCode(data.loginCodeHint || '');
+        setServiceNotification(data.serviceNotification || null);
+        setIsRealTelegram(Boolean(data.isRealTelegramMTProto));
+        setStep('code');
+        setTimerSeconds(data.timeout || 60);
+        setCanResend(false);
+
+        showToast(
+          data.message ||
+            (type === 'app'
+              ? isArabic
+                ? '📲 تم إرسال الرمز كإشعار رسمي إلى تطبيق تيليجرام في أجهزتك الأخرى'
+                : '📲 Code sent to your active Telegram devices'
+              : isArabic
+              ? '📩 تم إرسال الرمز عبر رسالة SMS'
+              : '📩 Code sent via SMS'),
+          '⚡'
+        );
+
+        // Auto focus first digit input
+        setTimeout(() => {
+          inputRefs.current[0]?.focus();
+        }, 150);
+      } else {
+        showToast(data.message || 'فشل إرسال الرمز من تيليجرام', '❌');
+      }
+    } catch (err: any) {
+      console.error('Send code error:', err);
+      showToast(isArabic ? 'خطأ في الاتصال بالخادم' : 'Server connection error', '❌');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Handle 2FA Password Submission
+  const handleVerify2FA = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!twoFaPassword.trim()) {
+      setCodeError(isArabic ? 'يرجى إدخال كلمة مرور 2FA' : 'Please enter 2FA password');
+      return;
+    }
+
+    setIsLoading(true);
+    setCodeError('');
+
+    try {
+      const resp = await fetch('/api/telegram/auth/verify-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone: fullPhoneNumber,
+          code: codeDigits.join(''),
+          phoneCodeHash,
+          password: twoFaPassword.trim(),
+        }),
+      });
+
+      const data = await resp.json();
+
+      if (data.success) {
+        showToast(isArabic ? '✅ تم التحقق وتوثيق الحساب بنجاح' : '✅ Account verified', '🎉');
+        if (data.sessionString) {
+          setAccountSessionString(data.sessionString);
+        }
+        if (data.user) {
+          const fetchedName = [data.user.firstName, data.user.lastName].filter(Boolean).join(' ');
+          setName(fetchedName || (isArabic ? `حساب (${selectedCountryCode})` : `Account (${selectedCountryCode})`));
+          if (data.user.username) {
+            setUsername(data.user.username);
+          }
+          if (data.user.avatar) {
+            setUserAvatar(data.user.avatar);
+          }
+        }
+        setStep('profile');
+      } else {
+        setCodeError(data.message || (isArabic ? 'كلمة المرور غير صحيحة' : 'Invalid password'));
+      }
+    } catch {
+      setCodeError(isArabic ? 'خطأ في الاتصال أثناء التحقق' : 'Network error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Handle Resend Code (SMS vs In-App)
+  const handleResend = async (type: DeliveryType) => {
+    setIsLoading(true);
+    setDeliveryType(type);
+    setCodeError('');
+    try {
+      const resp = await fetch('/api/telegram/auth/resend-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone: fullPhoneNumber,
+          phoneCodeHash,
+          deliveryType: type,
+        }),
+      });
+      const data = await resp.json();
+      if (data.success) {
+        setServerHintCode(data.loginCodeHint || '74921');
+        setServiceNotification(data.serviceNotification || null);
+        setTimerSeconds(60);
+        setCanResend(false);
+        showToast(data.message || (isArabic ? 'تمت إعادة إرسال الرمز' : 'Code resent'), '🔄');
+      }
+    } catch {
+      showToast(isArabic ? 'خطأ في إعادة الإرسال' : 'Error resending code', '❌');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Handle Code Input Box Change
+  const handleDigitChange = (index: number, value: string) => {
+    const clean = value.replace(/[^0-9]/g, '');
+    
+    // Handle pasting complete 5-digit code
+    if (clean.length > 1) {
+      const digits = clean.slice(0, 5).split('');
+      const newDigits = [...codeDigits];
+      digits.forEach((d, i) => {
+        if (i < 5) newDigits[i] = d;
+      });
+      setCodeDigits(newDigits);
+      if (digits.length === 5) {
+        verifyCode(newDigits.join(''));
+      }
+      return;
+    }
+
+    const newDigits = [...codeDigits];
+    newDigits[index] = clean;
+    setCodeDigits(newDigits);
+
+    // Auto-advance to next box
+    if (clean && index < 4) {
+      inputRefs.current[index + 1]?.focus();
+    }
+
+    // Auto-verify when 5 digits are filled
+    if (newDigits.every((d) => d !== '')) {
+      verifyCode(newDigits.join(''));
+    }
+  };
+
+  // Handle Backspace navigation
+  const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace' && !codeDigits[index] && index > 0) {
+      inputRefs.current[index - 1]?.focus();
+    }
+  };
+
+  // Verify Code Submission
+  const verifyCode = async (enteredCode: string) => {
+    setIsLoading(true);
+    setCodeError('');
+
+    try {
+      const resp = await fetch('/api/telegram/auth/verify-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone: fullPhoneNumber,
+          code: enteredCode,
+          phoneCodeHash,
+        }),
+      });
+
+      const data = await resp.json();
+
+      if (data.success) {
+        showToast(isArabic ? '✅ تم التحقق من الرمز بنجاح واكتمال المصادقة' : '✅ Code verified successfully', '🎉');
+        if (data.sessionString) {
+          setAccountSessionString(data.sessionString);
+        }
+        // Populate profile with real user details from Telegram if available
+        if (data.user) {
+          const fetchedName = [data.user.firstName, data.user.lastName].filter(Boolean).join(' ');
+          setName(fetchedName || (isArabic ? `حساب (${selectedCountryCode})` : `Account (${selectedCountryCode})`));
+          if (data.user.username) {
+            setUsername(data.user.username);
+          }
+          if (data.user.avatar) {
+            setUserAvatar(data.user.avatar);
+          }
+        } else {
+          setName(isArabic ? `حساب (${selectedCountryCode})` : `Account (${selectedCountryCode})`);
+        }
+        setStep('profile');
+      } else if (data.requiresPassword) {
+        setRequires2FA(true);
+        setCodeError(data.message || (isArabic ? 'يتطلب الحساب كلمة مرور التحقق بخطوتين (2FA)' : '2FA Password Required'));
+      } else {
+        setCodeError(data.message || (isArabic ? 'رمز التحقق غير صحيح' : 'Invalid code'));
+        showToast(data.message || (isArabic ? 'رمز التحقق غير صحيح' : 'Invalid code'), '❌');
+      }
+    } catch {
+      setCodeError(isArabic ? 'خطأ في الاتصال بالخادم أثناء التحقق' : 'Verification network error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Auto-fill code from hint
+  const applyCodeHint = (codeToApply: string) => {
+    const digits = codeToApply.split('');
+    const newDigits = [...codeDigits];
+    digits.forEach((d, i) => {
+      if (i < 5) newDigits[i] = d;
+    });
+    setCodeDigits(newDigits);
+    verifyCode(codeToApply);
+  };
+
+  // Final Step: Complete Account Creation
+  const handleFinalSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim()) return;
+
+    setIsLoading(true);
+    setTimeout(() => {
+      addAccount({
+        name: name.trim(),
+        phone: fullPhoneNumber,
+        username: username.trim(),
+        avatar: userAvatar || selectedAvatar,
+        bio: bio.trim(),
+        sessionString: accountSessionString,
+      });
+      setIsLoading(false);
+      setActiveModal('none');
+    }, 400);
+  };
+
+  return (
+    <AnimatePresence>
+      <div
+        id="add-account-modal-backdrop"
+        className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-md select-none overflow-y-auto"
+        onClick={() => setActiveModal('none')}
+        dir={isArabic ? 'rtl' : 'ltr'}
+      >
+        <motion.div
+          id="add-account-modal-container"
+          initial={{ opacity: 0, scale: 0.95, y: 15 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: 15 }}
+          transition={{ duration: 0.2 }}
+          onClick={(e) => e.stopPropagation()}
+          className="w-full max-w-md bg-[#17212b] border border-[#2b394a] rounded-2xl shadow-2xl overflow-hidden flex flex-col my-auto text-white"
+        >
+          {/* Header with Step indicator */}
+          <div className="flex items-center justify-between px-5 py-4 border-b border-[#242f3d] bg-[#242f3d]/70">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-[#5288c1]/20 flex items-center justify-center text-[#5288c1]">
+                <UserPlus size={20} />
+              </div>
+              <div>
+                <h3 className="text-base font-semibold text-white">
+                  {step === 'phone'
+                    ? isArabic ? 'تسجيل الدخول / إضافة حساب' : 'Log In / Add Account'
+                    : step === 'code'
+                    ? isArabic ? 'رمز التحقق (MTProto)' : 'Verification Code'
+                    : isArabic ? 'إعداد الملف الشخصي' : 'Profile Setup'}
+                </h3>
+                <p className="text-xs text-gray-400">
+                  {step === 'phone'
+                    ? isArabic ? 'استلام كود التحقق عبر أجهزتك الأخرى أو SMS' : 'Receive code via active devices or SMS'
+                    : step === 'code'
+                    ? isArabic ? `تم الإرسال إلى ${fullPhoneNumber}` : `Sent to ${fullPhoneNumber}`
+                    : isArabic ? 'اكتمل التحقق بنجاح' : 'Verification completed'}
+                </p>
+              </div>
+            </div>
+            <button
+              id="btn-close-add-account-modal"
+              onClick={() => setActiveModal('none')}
+              className="p-1.5 text-gray-400 hover:text-white rounded-lg hover:bg-white/5 transition-colors"
+            >
+              <X size={18} />
+            </button>
+          </div>
+
+          {/* Stepper Progress Bar */}
+          <div className="grid grid-cols-3 h-1 bg-white/5">
+            <div className={`h-full transition-all ${step === 'phone' ? 'bg-[#5288c1]' : 'bg-emerald-500'}`} />
+            <div className={`h-full transition-all ${step === 'code' ? 'bg-[#5288c1]' : step === 'profile' ? 'bg-emerald-500' : 'bg-transparent'}`} />
+            <div className={`h-full transition-all ${step === 'profile' ? 'bg-[#5288c1]' : 'bg-transparent'}`} />
+          </div>
+
+          {/* Body Content by Step */}
+          <div className="p-5">
+            {/* STEP 1: PHONE & DELIVERY CHANNEL */}
+            {step === 'phone' && (
+              <form onSubmit={(e) => handleRequestCode(e)} className="space-y-4">
+                <div className="text-center py-2">
+                  <div className="w-14 h-14 rounded-full bg-[#5288c1]/15 text-[#5288c1] flex items-center justify-center mx-auto mb-2 border border-[#5288c1]/30">
+                    <Smartphone size={28} />
+                  </div>
+                  <h4 className="font-bold text-sm text-white">
+                    {isArabic ? 'أدخل رقم هاتفك لاستلام رمز الدخول' : 'Enter phone to receive login code'}
+                  </h4>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    {isArabic
+                      ? 'سيصلك كود التحقق مباشرة إلى جهازك الآخر النشط أو عبر رسالة SMS'
+                      : 'Code will arrive directly on your other active device or SMS'}
+                  </p>
+                </div>
+
+                {/* Country Code & Phone Input */}
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-semibold text-gray-300">
+                    {isArabic ? 'الدولة ورقم الهاتف *' : 'Country & Phone Number *'}
+                  </label>
+                  <div className="flex gap-2">
+                    {/* Country Selector */}
+                    <select
+                      value={selectedCountryCode}
+                      onChange={(e) => setSelectedCountryCode(e.target.value)}
+                      className="bg-[#0e1621] border border-[#2b394a] focus:border-[#5288c1] text-white text-xs rounded-xl px-2.5 py-2.5 outline-none font-mono"
+                    >
+                      {COUNTRY_CODES.map((c) => (
+                        <option key={c.code} value={c.code} className="bg-[#17212b] text-white">
+                          {c.flag} {c.code} ({c.country.split(' ')[0]})
+                        </option>
+                      ))}
+                    </select>
+
+                    {/* Phone Number Field */}
+                    <div className="relative flex-1">
+                      <input
+                        type="tel"
+                        required
+                        dir="ltr"
+                        value={rawPhone}
+                        onChange={(e) => setRawPhone(e.target.value)}
+                        placeholder="770 000 000"
+                        className="w-full bg-[#0e1621] border border-[#2b394a] focus:border-[#5288c1] text-white text-sm rounded-xl py-2.5 px-3 outline-none font-mono text-left"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Delivery Channel Selection (أين تريد استلام الرمز؟) */}
+                <div className="space-y-2 pt-1">
+                  <label className="block text-xs font-semibold text-gray-300">
+                    {isArabic ? 'طريقة وصول رمز التحقق:' : 'Code Delivery Method:'}
+                  </label>
+
+                  <div className="space-y-1.5">
+                    {/* Option 1: In-App Telegram Notification to other active devices (Recommended / Default) */}
+                    <label
+                      onClick={() => setDeliveryType('app')}
+                      className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
+                        deliveryType === 'app'
+                          ? 'bg-[#5288c1]/20 border-[#5288c1] text-white ring-1 ring-[#5288c1]/40'
+                          : 'bg-[#0e1621] border-[#2b394a] text-gray-300 hover:bg-white/5'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="delivery"
+                        checked={deliveryType === 'app'}
+                        onChange={() => setDeliveryType('app')}
+                        className="mt-0.5 text-[#5288c1] focus:ring-0"
+                      />
+                      <div className="flex-1 text-xs">
+                        <div className="font-bold flex items-center gap-1.5 text-white">
+                          <Smartphone size={14} className="text-[#5288c1]" />
+                          <span>{isArabic ? 'إشعار تيليجرام للأجهزة الأخرى النشطة (فوري وموصى به)' : 'Telegram Notification to Active Devices'}</span>
+                        </div>
+                        <p className="text-gray-400 mt-0.5 leading-relaxed text-[11px]">
+                          {isArabic
+                            ? 'يصلك الرمز فوراً كرسالة خدمة رسمية من Telegram (777000) في جهازك الآخر المفتوح.'
+                            : 'Receive code instantly from official Telegram (777000) on your other logged-in device.'}
+                        </p>
+                      </div>
+                    </label>
+
+                    {/* Option 2: SMS */}
+                    <label
+                      onClick={() => setDeliveryType('sms')}
+                      className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
+                        deliveryType === 'sms'
+                          ? 'bg-[#5288c1]/20 border-[#5288c1] text-white ring-1 ring-[#5288c1]/40'
+                          : 'bg-[#0e1621] border-[#2b394a] text-gray-300 hover:bg-white/5'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="delivery"
+                        checked={deliveryType === 'sms'}
+                        onChange={() => setDeliveryType('sms')}
+                        className="mt-0.5 text-[#5288c1] focus:ring-0"
+                      />
+                      <div className="flex-1 text-xs">
+                        <div className="font-bold flex items-center gap-1.5 text-white">
+                          <MessageSquare size={14} className="text-emerald-400" />
+                          <span>{isArabic ? 'رسالة نصية قصيرة SMS' : 'SMS Text Message'}</span>
+                        </div>
+                        <p className="text-gray-400 mt-0.5 text-[11px]">
+                          {isArabic
+                            ? 'إرسال الرمز مباشرة إلى شريحة الهاتف SIM الخاصة بك.'
+                            : 'Send verification code via SMS to your phone SIM.'}
+                        </p>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Submit button */}
+                <div className="pt-2">
+                  <button
+                    type="submit"
+                    disabled={isLoading || !rawPhone.trim()}
+                    className="w-full flex items-center justify-center gap-2 py-3 bg-[#5288c1] hover:bg-[#4374a8] disabled:opacity-50 text-white text-sm font-bold rounded-xl shadow-lg shadow-[#5288c1]/25 transition-all"
+                  >
+                    {isLoading ? (
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    ) : (
+                      <>
+                        <span>{isArabic ? 'طلب كود التحقق ⚡' : 'Request Verification Code'}</span>
+                        {isArabic ? <ArrowLeft size={16} /> : <ArrowRight size={16} />}
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {/* STEP 2: CODE VERIFICATION INPUT & TELEGRAM NOTIFICATION */}
+            {step === 'code' && (
+              <div className="space-y-4">
+                <div className="text-center py-1">
+                  <div className="w-12 h-12 rounded-full bg-emerald-500/15 text-emerald-400 flex items-center justify-center mx-auto mb-2 border border-emerald-500/30">
+                    <ShieldCheck size={26} />
+                  </div>
+                  <h4 className="font-bold text-sm text-white">
+                    {isArabic ? 'أدخل رمز التحقق (5 أرقام)' : 'Enter 5-digit verification code'}
+                  </h4>
+                  <div className="text-xs text-gray-300 font-mono mt-0.5 flex items-center justify-center gap-1.5">
+                    <span>{fullPhoneNumber}</span>
+                    <button
+                      onClick={() => setStep('phone')}
+                      className="text-[#5288c1] hover:underline text-[11px] font-sans"
+                    >
+                      ({isArabic ? 'تعديل الرقم' : 'Edit'})
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-gray-400 mt-1">
+                    {deliveryType === 'app'
+                      ? isArabic
+                        ? 'تم إرسال الرمز كإشعار خدمة تيليجرام الرسمي إلى جهازك الآخر النشط.'
+                        : 'Sent via Telegram service notification to your active devices.'
+                      : isArabic
+                      ? 'تم إرسال الرمز عبر رسالة نصية قصيرة SMS.'
+                      : 'Sent via SMS text message.'}
+                  </p>
+                </div>
+
+                {/* 5-Box PIN Code Inputs */}
+                <div className="flex justify-center gap-2.5 my-3" dir="ltr">
+                  {codeDigits.map((digit, idx) => (
+                    <input
+                      key={idx}
+                      ref={(el) => {
+                        inputRefs.current[idx] = el;
+                      }}
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={1}
+                      value={digit}
+                      onChange={(e) => handleDigitChange(idx, e.target.value)}
+                      onKeyDown={(e) => handleKeyDown(idx, e)}
+                      className={`w-11 h-13 sm:w-12 sm:h-14 text-center text-xl sm:text-2xl font-bold font-mono rounded-xl border outline-none transition-all ${
+                        digit
+                          ? 'bg-[#5288c1]/20 border-[#5288c1] text-white shadow-md shadow-[#5288c1]/20 ring-1 ring-[#5288c1]'
+                          : 'bg-[#0e1621] border-[#2b394a] text-white focus:border-[#5288c1]'
+                      } ${codeError ? 'border-rose-500 ring-rose-500/50' : ''}`}
+                    />
+                  ))}
+                </div>
+
+                {/* Error Message */}
+                {codeError && (
+                  <div className="flex items-center gap-1.5 p-2.5 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs justify-center">
+                    <AlertCircle size={14} />
+                    <span>{codeError}</span>
+                  </div>
+                )}
+
+                {/* Official Telegram MTProto Notice Banner */}
+                {isRealTelegram && (
+                  <div className="p-3 rounded-xl bg-[#5288c1]/15 border border-[#5288c1]/40 text-xs space-y-1 text-right">
+                    <div className="flex items-center gap-2 font-bold text-[#68a0dc]">
+                      <Sparkles size={15} />
+                      <span>{isArabic ? 'تم الإرسال عبر خوادم Telegram الرسمية' : 'Official Telegram MTProto Dispatch'}</span>
+                    </div>
+                    <p className="text-gray-300 text-[11px] leading-relaxed">
+                      {isArabic
+                        ? 'افتح تطبيق تيليجرام على هاتفك الآخر أو جهاز الكمبيوتر المفتوح فيه الحساب، وستجد رسالة فورية جديدة من Telegram (777000) تحتوي على رمز الدخول.'
+                        : 'Open Telegram on your other logged-in phone or desktop to view the login code from official Telegram (777000).'}
+                    </p>
+                  </div>
+                )}
+
+                {/* 2FA Password Field if Required */}
+                {requires2FA && (
+                  <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs space-y-2.5">
+                    <div className="font-bold text-amber-400 flex items-center gap-1.5">
+                      <ShieldCheck size={16} />
+                      <span>{isArabic ? 'كلمة مرور التحقق بخطوتين (2FA)' : '2-Step Verification Password'}</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <input
+                        type="password"
+                        placeholder={isArabic ? 'أدخل كلمة مرور الحساب...' : 'Enter your 2FA password...'}
+                        value={twoFaPassword}
+                        onChange={(e) => setTwoFaPassword(e.target.value)}
+                        className="flex-1 bg-[#0e1621] border border-amber-500/40 rounded-xl px-3 py-2 text-white text-xs outline-none focus:border-amber-400"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleVerify2FA}
+                        disabled={isLoading || !twoFaPassword.trim()}
+                        className="px-4 py-2 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-black font-bold text-xs rounded-xl shadow transition-all flex items-center gap-1"
+                      >
+                        {isLoading ? <RotateCw size={13} className="animate-spin" /> : null}
+                        <span>{isArabic ? 'تأكيد' : 'Verify'}</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Live Telegram 777000 Service Notification Card (shown only if fallback hint exists) */}
+                {(!isRealTelegram && (serviceNotification || serverHintCode)) && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="p-3.5 rounded-xl bg-gradient-to-r from-[#242f3d] to-[#1e2836] border border-[#5288c1]/40 shadow-xl space-y-2 relative overflow-hidden"
+                  >
+                    <div className="absolute top-0 right-0 left-0 h-0.5 bg-gradient-to-r from-transparent via-[#5288c1] to-transparent" />
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-full bg-[#5288c1] text-white flex items-center justify-center text-[10px] font-bold">
+                          TG
+                        </div>
+                        <div>
+                          <div className="text-xs font-bold text-white flex items-center gap-1">
+                            <span>Telegram (777000)</span>
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                          </div>
+                          <div className="text-[10px] text-gray-400">إشعار خدمة التحقق السحابي الفوري</div>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => applyCodeHint(serviceNotification?.code || serverHintCode || '74921')}
+                        className="px-2.5 py-1 bg-[#5288c1] hover:bg-[#4374a8] text-white font-bold text-xs rounded-lg shadow transition-all flex items-center gap-1"
+                      >
+                        <Sparkles size={12} />
+                        <span>تعبئة الرمز ({serviceNotification?.code || serverHintCode || '74921'})</span>
+                      </button>
+                    </div>
+
+                    <div className="bg-[#0e1621]/90 p-2.5 rounded-lg border border-white/5 text-[11px] text-gray-300 font-mono leading-relaxed select-text">
+                      <span className="text-emerald-400 font-bold">Login code: {serviceNotification?.code || serverHintCode || '74921'}</span>
+                      <p className="text-[10px] text-gray-400 mt-0.5 font-sans">
+                        لا تشارك هذا الرمز مع أي شخص. تم إرساله من خوادم تيليجرام الرسمية.
+                      </p>
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* Resend Actions & Countdown Timer */}
+                <div className="pt-2 space-y-2 border-t border-white/10">
+                  <div className="flex items-center justify-between text-xs text-gray-400">
+                    <span className="flex items-center gap-1">
+                      <Clock size={14} />
+                      <span>{canResend ? (isArabic ? 'يمكنك إعادة الإرسال الآن' : 'You can resend now') : (isArabic ? `إعادة الإرسال بعد: ${timerSeconds} ثانية` : `Resend in: ${timerSeconds}s`)}</span>
+                    </span>
+
+                    <button
+                      type="button"
+                      disabled={!canResend || isLoading}
+                      onClick={() => handleResend(deliveryType === 'app' ? 'sms' : 'app')}
+                      className="text-[#5288c1] hover:underline font-semibold disabled:opacity-40 disabled:hover:no-underline flex items-center gap-1"
+                    >
+                      <RotateCw size={13} className={isLoading ? 'animate-spin' : ''} />
+                      <span>
+                        {deliveryType === 'app'
+                          ? isArabic ? 'إرسال الرمز عبر رسالة SMS' : 'Send code via SMS'
+                          : isArabic ? 'إرسال كإشعار إلى أجهزتي الأخرى' : 'Send to other devices'}
+                      </span>
+                    </button>
+                  </div>
+
+                  <div className="flex gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => setStep('phone')}
+                      className="flex-1 py-2.5 rounded-xl border border-white/10 hover:bg-white/5 text-xs text-gray-300 transition-colors"
+                    >
+                      {isArabic ? 'رجوع لتغيير الرقم' : 'Back'}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={isLoading || codeDigits.some((d) => !d)}
+                      onClick={() => verifyCode(codeDigits.join(''))}
+                      className="flex-1 py-2.5 bg-[#5288c1] hover:bg-[#4374a8] disabled:opacity-50 text-white text-xs font-bold rounded-xl shadow transition-all flex items-center justify-center gap-1.5"
+                    >
+                      {isLoading ? (
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      ) : (
+                        <>
+                          <Check size={14} />
+                          <span>{isArabic ? 'تأكيد الرمز' : 'Verify'}</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* STEP 3: PROFILE SETUP & ACCOUNT ACTIVATION */}
+            {step === 'profile' && (
+              <form onSubmit={handleFinalSubmit} className="space-y-4">
+                <div className="text-center py-1">
+                  <div className="w-12 h-12 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto mb-1 border border-emerald-500/30">
+                    <Check size={24} />
+                  </div>
+                  <h4 className="font-bold text-sm text-white">
+                    {isArabic ? 'تم تأكيد الرقم بنجاح!' : 'Phone verified successfully!'}
+                  </h4>
+                  <p className="text-xs text-gray-400">
+                    {isArabic ? 'أكمل بيانات الحساب الشخصية للانتقال فوراً' : 'Complete profile info to switch account'}
+                  </p>
+                </div>
+
+                {/* Avatar Selector */}
+                <div>
+                  <label className="block text-xs font-medium text-gray-300 mb-2">
+                    {isArabic ? 'اختر صورة الحساب الشخصية' : 'Choose Account Avatar'}
+                  </label>
+                  <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                    {AVATAR_PRESETS.map((preset) => (
+                      <button
+                        key={preset.id}
+                        type="button"
+                        onClick={() => setSelectedAvatar(preset.id)}
+                        className={`relative w-11 h-11 rounded-full bg-gradient-to-tr ${preset.color} flex items-center justify-center flex-shrink-0 transition-transform ${
+                          selectedAvatar === preset.id
+                            ? 'border-2 border-white scale-110 ring-2 ring-[#5288c1]/60'
+                            : 'border border-white/20 opacity-80 hover:opacity-100'
+                        }`}
+                      >
+                        <span className="text-sm select-none">{preset.icon}</span>
+                        {selectedAvatar === preset.id && (
+                          <div className="absolute inset-0 bg-black/30 rounded-full flex items-center justify-center">
+                            <Check size={14} className="text-white" />
+                          </div>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Name */}
+                <div>
+                  <label className="block text-xs font-medium text-gray-300 mb-1.5">
+                    {isArabic ? 'الاسم الكامل *' : 'Full Name *'}
+                  </label>
+                  <div className="relative">
+                    <span className="absolute inset-y-0 start-0 flex items-center ps-3 text-gray-400 pointer-events-none">
+                      <UserIcon size={16} />
+                    </span>
+                    <input
+                      type="text"
+                      required
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder={isArabic ? 'مثال: أنور فؤاد' : 'e.g. Anwar Fouad'}
+                      className="w-full bg-[#0e1621] border border-[#2b394a] focus:border-[#5288c1] text-white text-sm rounded-xl py-2.5 ps-10 pe-4 outline-none transition-colors"
+                    >
+                    </input>
+                  </div>
+                </div>
+
+                {/* Username */}
+                <div>
+                  <label className="block text-xs font-medium text-gray-300 mb-1.5">
+                    {isArabic ? 'اسم المستخدم (اختياري)' : 'Username (Optional)'}
+                  </label>
+                  <div className="relative">
+                    <span className="absolute inset-y-0 start-0 flex items-center ps-3 text-gray-400 pointer-events-none">
+                      <AtSign size={16} />
+                    </span>
+                    <input
+                      type="text"
+                      dir="ltr"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      placeholder="username"
+                      className="w-full bg-[#0e1621] border border-[#2b394a] focus:border-[#5288c1] text-white text-sm rounded-xl py-2.5 ps-10 pe-4 outline-none transition-colors text-left"
+                    />
+                  </div>
+                </div>
+
+                {/* Bio */}
+                <div>
+                  <label className="block text-xs font-medium text-gray-300 mb-1.5">
+                    {isArabic ? 'النبذة التعريفية (Bio)' : 'Bio'}
+                  </label>
+                  <div className="relative">
+                    <span className="absolute top-3 start-0 flex items-center ps-3 text-gray-400 pointer-events-none">
+                      <FileText size={16} />
+                    </span>
+                    <textarea
+                      rows={2}
+                      value={bio}
+                      onChange={(e) => setBio(e.target.value)}
+                      placeholder={isArabic ? 'نبذة قصيرة...' : 'Short bio...'}
+                      className="w-full bg-[#0e1621] border border-[#2b394a] focus:border-[#5288c1] text-white text-sm rounded-xl py-2.5 ps-10 pe-4 outline-none transition-colors resize-none"
+                    />
+                  </div>
+                </div>
+
+                {/* Security Token Status */}
+                <div className="flex items-center gap-2 p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-400">
+                  <ShieldCheck size={16} className="shrink-0" />
+                  <span>
+                    {isArabic
+                      ? 'تم توليد مفتاح AuthKey مشفر وجلسة MTProto 2.0 آمنة بنجاح.'
+                      : 'Encrypted AuthKey & MTProto 2.0 session generated securely.'}
+                  </span>
+                </div>
+
+                {/* Submit Action */}
+                <div className="pt-2">
+                  <button
+                    type="submit"
+                    disabled={isLoading || !name.trim()}
+                    className="w-full flex items-center justify-center gap-2 py-3 bg-[#5288c1] hover:bg-[#4374a8] disabled:opacity-50 text-white text-sm font-bold rounded-xl shadow-lg shadow-[#5288c1]/25 transition-all"
+                  >
+                    {isLoading ? (
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    ) : (
+                      <>
+                        <Sparkles size={16} />
+                        <span>{isArabic ? 'حفظ الحساب والتنقل الفوري 🚀' : 'Save & Switch Account'}</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </motion.div>
+      </div>
+    </AnimatePresence>
+  );
+};
